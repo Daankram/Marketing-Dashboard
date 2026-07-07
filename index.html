@@ -3,60 +3,119 @@
 <head>
 <meta charset="UTF-8">
 <title>Marketing dashboard - Hans & Grietje</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fcfcfb;--card:#f1efe8;--border:#d3d1c7;--text:#0b0b0b;--text2:#52514e;--muted:#898781;--accent:#2a78d6;}
-@media (prefers-color-scheme: dark){:root{--bg:#1a1a19;--card:#2c2c2a;--border:#444441;--text:#ffffff;--text2:#c3c2b7;--muted:#898781;}}
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
-body{background:var(--bg);color:var(--text);margin:0;padding:24px;max-width:900px;margin:0 auto}
-h1{font-size:20px;font-weight:600;margin:0 0 20px}
-.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-.tabbtn{background:transparent;border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--text2)}
-.tabbtn.active{background:var(--card);color:var(--text);border-color:var(--muted)}
+:root{
+  --bg:#faf3e6; --bg-deep:#f3e8d4;
+  --card:#ffffff; --card-tint:#fffaf1;
+  --border:#e6d9bf; --border-strong:#d8c49c;
+  --text:#3a2a1d; --text2:#7a6650; --muted:#a5906f;
+  --forest:#2f5233; --forest-dark:#1f3a23;
+  --red:#c0392b; --red-dark:#9c2d21;
+  --gold:#d99a1f; --gold-dark:#b57e14;
+  --purple:#7a4fa0;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#241d15; --bg-deep:#1a140e;
+    --card:#2f2619; --card-tint:#352b1c;
+    --border:#4a3c28; --border-strong:#5c4b32;
+    --text:#f5ead6; --text2:#c9b795; --muted:#8f7a58;
+    --forest:#4a7c50; --forest-dark:#376b3e;
+  }
+}
+*{box-sizing:border-box}
+body{
+  font-family:'Nunito',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:
+    radial-gradient(circle at 15% 8%, rgba(47,82,51,0.06), transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(192,57,43,0.05), transparent 45%),
+    var(--bg);
+  color:var(--text); margin:0; padding:0 0 48px;
+}
+.page-wrap{max-width:920px;margin:0 auto;padding:0 24px}
+.hg-header{
+  background:linear-gradient(135deg, var(--forest) 0%, var(--forest-dark) 100%);
+  color:#fff; padding:28px 24px 34px; margin-bottom:28px; position:relative; overflow:hidden;
+}
+.hg-header::after{
+  content:''; position:absolute; left:0; right:0; bottom:0; height:14px;
+  background:repeating-linear-gradient(-45deg, var(--gold) 0 14px, var(--red) 14px 28px);
+  opacity:0.9;
+}
+.hg-header-inner{max-width:920px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+.hg-eyebrow{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#e8d9a8;font-weight:700;margin:0 0 6px}
+h1{font-family:'Fredoka',sans-serif;font-size:26px;font-weight:600;margin:0 0 4px;color:#fff}
+.hg-sub{font-size:13px;color:#dcead9;margin:0}
+.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.tabbtn{
+  font-family:'Nunito',sans-serif;font-weight:700;
+  background:var(--card);border:1.5px solid var(--border-strong);border-radius:999px;
+  padding:8px 18px;font-size:13px;cursor:pointer;color:var(--text2);transition:all .15s ease;
+}
+.tabbtn:hover{border-color:var(--forest);color:var(--forest)}
+.tabbtn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
 .tabpane{display:none}
-.metriccards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
-.mc{background:var(--card);border-radius:8px;padding:14px}
-.mc p:first-child{font-size:12px;color:var(--text2);margin:0 0 4px}
-.mc p:last-child{font-size:22px;font-weight:600;margin:0}
-input,select,textarea,button{font-size:13px;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text)}
-button{cursor:pointer;background:var(--card)}
-button:hover{border-color:var(--muted)}
+.metriccards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px}
+.mc{background:var(--card);border-radius:var(--radius);padding:16px 16px 14px;border:1px solid var(--border);border-top:3px solid var(--forest);box-shadow:0 2px 8px rgba(58,42,29,0.05)}
+.mc:nth-child(2){border-top-color:var(--red)}
+.mc:nth-child(3){border-top-color:var(--gold)}
+.mc:nth-child(4){border-top-color:var(--purple)}
+.mc p:first-child{font-size:12px;color:var(--text2);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px}
+.mc p:last-child{font-family:'Fredoka',sans-serif;font-size:24px;font-weight:600;margin:0;color:var(--text)}
+input,select,textarea,button{font-family:'Nunito',sans-serif;font-size:13px;padding:9px 12px;border-radius:9px;border:1.5px solid var(--border-strong);background:var(--card);color:var(--text)}
+button{cursor:pointer;background:var(--forest);color:#fff;font-weight:700;border-color:var(--forest);transition:opacity .15s}
+button:hover{opacity:0.88}
+#exportBtn, #aiCopyBtn{background:var(--gold);border-color:var(--gold);color:#3a2a1d}
 table{width:100%;font-size:13px;border-collapse:collapse}
-th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--muted);color:var(--text2);font-weight:600;font-size:12px}
-td{padding:6px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
-.postcard{background:var(--card);border-radius:8px;padding:12px}
-.postrow{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
-.delbtn{background:transparent;border:none;color:#c0392b;cursor:pointer;font-size:12px;padding:2px 6px}
-label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px}
-.section-title{font-weight:600;font-size:15px;margin:0 0 8px}
+th{text-align:left;padding:8px 10px;border-bottom:2px solid var(--forest);color:var(--text2);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.3px}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--card-tint)}
+.postcard{background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid var(--border);box-shadow:0 2px 8px rgba(58,42,29,0.05)}
+.postrow{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.delbtn{background:transparent;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:2px 6px;font-weight:700}
+.delbtn:hover{opacity:0.7}
+label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight:600}
+.section-title{font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;margin:0 0 8px;color:var(--forest)}
 .hint{font-size:12px;color:var(--muted);margin:0 0 8px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.chart-wrap{position:relative;height:220px;margin-bottom:24px}
+.chart-wrap{position:relative;height:220px;margin-bottom:24px;background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:14px}
+.card-block{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid var(--border);margin-bottom:20px;box-shadow:0 2px 8px rgba(58,42,29,0.05)}
 </style>
 </head>
 <body>
-<div id="gate" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px">
-<div style="text-align:center;max-width:280px">
-<p style="font-size:15px;margin:0 0 12px;color:var(--text)">Voer de toegangscode in</p>
-<input type="password" id="gateCode" style="width:100%;margin-bottom:10px" autocomplete="off">
+<div id="gate" style="position:fixed;inset:0;background:linear-gradient(135deg, var(--forest) 0%, var(--forest-dark) 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px">
+<div style="text-align:center;max-width:300px;background:var(--card);padding:32px 28px;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,0.25)">
+<p style="font-family:'Fredoka',sans-serif;font-size:19px;margin:0 0 4px;color:var(--forest);font-weight:600">Hans &amp; Grietje</p>
+<p style="font-size:12px;margin:0 0 18px;color:var(--text2)">Marketing dashboard</p>
+<input type="password" id="gateCode" placeholder="Toegangscode" style="width:100%;margin-bottom:10px;text-align:center" autocomplete="off">
 <br>
 <button id="gateBtn" style="width:100%">Openen</button>
-<p id="gateError" style="color:#c0392b;font-size:12px;margin-top:10px;min-height:16px"></p>
+<p id="gateError" style="color:var(--red);font-size:12px;margin-top:10px;min-height:16px"></p>
 </div>
 </div>
 <div id="app-content" style="display:none">
-<h1>Marketing dashboard - Hans & Grietje Pannenkoekenhuis en Speelpark</h1>
+<div class="hg-header"><div class="hg-header-inner">
+<p class="hg-eyebrow">Hans &amp; Grietje · Zeewolde</p>
+<h1>Marketing dashboard</h1>
+<p class="hg-sub">Pannenkoekenhuis en Speelpark — sociale-mediaprestaties in één overzicht</p>
+</div></div>
+<div class="page-wrap">
 <div class="tabbar" id="tabbar">
 <button class="tabbtn" data-tab="overview">Overzicht</button>
 <button class="tabbtn" data-tab="compare">Vergelijken</button>
 <button class="tabbtn" data-tab="posts">Posts</button>
 <button class="tabbtn" data-tab="input">Data invoeren</button>
+<button class="tabbtn" data-tab="widgets">Widgets</button>
 <button class="tabbtn" data-tab="ai">AI-analyse</button>
 </div>
 <div class="metriccards" id="metriccards"></div>
 
-<div id="tab-overview" class="tabpane">
+<div id="tab-overview" class="tabpane card-block">
 <p class="hint">Engagement per maand</p>
 <div class="chart-wrap"><canvas id="chartEngagement"></canvas></div>
 <p id="hintEngagement" class="hint" style="margin-top:-16px"></p>
@@ -71,7 +130,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px}
 <p id="hintNew" class="hint" style="margin-top:-8px"></p>
 </div>
 
-<div id="tab-compare" class="tabpane">
+<div id="tab-compare" class="tabpane card-block">
 <div class="grid2" style="margin-bottom:12px">
 <div>
 <label>Periode A - start</label><input type="date" id="cmpStart1" style="width:100%;margin-bottom:6px">
@@ -86,7 +145,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px}
 <div id="cmpResult"></div>
 </div>
 
-<div id="tab-posts" class="tabpane">
+<div id="tab-posts" class="tabpane card-block">
 <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
 <select id="postsPlatformFilter">
 <option value="all">Alle platformen</option>
@@ -106,46 +165,27 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px}
 <div style="overflow-x:auto"><table id="postsTable"></table></div>
 </div>
 
-<div id="tab-input" class="tabpane">
-<p class="section-title">Post handmatig toevoegen</p>
-<div class="grid2" style="margin-bottom:8px">
-<select id="npPlatform"><option value="Facebook">Facebook</option><option value="Instagram">Instagram</option></select>
-<input type="date" id="npDate">
-</div>
-<input type="text" id="npText" placeholder="Korte omschrijving van de post" style="width:100%;margin-bottom:8px">
-<div class="grid3" style="margin-bottom:8px">
-<input type="number" id="npLikes" placeholder="Likes">
-<input type="number" id="npComments" placeholder="Reacties">
-<input type="number" id="npShares" placeholder="Doorsturen">
-<input type="number" id="npReach" placeholder="Bereik">
-<input type="number" id="npViews" placeholder="Weergaven">
-<input type="number" id="npEngagement" placeholder="Engagement">
-</div>
-<button id="addPostBtn" style="margin-bottom:24px">Post toevoegen</button>
+<div id="tab-input" class="tabpane card-block">
+<p class="section-title">Data uploaden</p>
+<p class="hint" style="margin-bottom:18px">Upload elke week gewoon je Excel- of PDF-export — het dashboard herkent zelf of het Facebook of Instagram is en verwerkt de posts automatisch.</p>
 
-<p class="section-title">Excel-werkmap uploaden (wekelijks)</p>
-<p class="hint">Upload je .xlsx-bestand zoals je die van Hootsuite/Meta krijgt (dezelfde opmaak als je huidige Facebook- of Instagram-export). Het dashboard herkent zelf om welk type het gaat en telt de posts erbij op.</p>
-<input type="file" id="xlsxUpload" accept=".xlsx" style="margin-bottom:8px">
-<p id="xlsxStatus" class="hint" style="margin-bottom:20px"></p>
-
-<p class="section-title">Back-up van je data</p>
-<p class="hint">De data staat alleen lokaal in deze browser. Exporteer een back-up om over te zetten naar een andere computer of te delen met een collega.</p>
-<div style="display:flex;gap:8px;margin-bottom:24px">
-<button id="exportBtn">Exporteer data (.json)</button>
-<label for="importFile" style="display:inline-block;padding:7px 10px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:13px">Importeer data</label>
-<input type="file" id="importFile" accept=".json" style="display:none">
+<div class="grid2" style="margin-bottom:24px">
+<div style="background:var(--card-tint);border:1.5px dashed var(--border-strong);border-radius:var(--radius);padding:18px;text-align:center">
+<p style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;color:var(--forest);margin:0 0 4px">Excel-bestand (.xlsx)</p>
+<p class="hint" style="margin:0 0 12px">Rechtstreeks uit Hootsuite of Meta</p>
+<input type="file" id="xlsxUpload" accept=".xlsx" style="width:100%;margin-bottom:8px">
+<p id="xlsxStatus" class="hint" style="margin:0;min-height:16px"></p>
+</div>
+<div style="background:var(--card-tint);border:1.5px dashed var(--border-strong);border-radius:var(--radius);padding:18px;text-align:center">
+<p style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;color:var(--forest);margin:0 0 4px">PDF-bestand (.pdf)</p>
+<p class="hint" style="margin:0 0 12px">Wordt automatisch uitgelezen</p>
+<input type="file" id="pdfUpload" accept=".pdf" style="width:100%;margin-bottom:8px">
+<p id="pdfStatus" class="hint" style="margin:0;min-height:16px"></p>
+</div>
 </div>
 
-<p class="section-title">Tabel plakken (uit Excel/Sheets export)</p>
-<p class="hint">Facebook-kolommen: Datum, Pagina, Posttekst, Opmerkingen, Engagement, Likes, Delen, Weergaven</p>
-<textarea id="pasteFacebook" rows="3" placeholder="Plak hier de Facebook-tabel (tab-gescheiden)" style="width:100%;margin-bottom:6px"></textarea>
-<button id="parseFacebookBtn" style="margin-bottom:16px">Facebook-tabel toevoegen</button>
-<p class="hint">Instagram-kolommen: Datum, Account, Platform, Post, Comments, Engagement, Follows, Likes, Reach, Saves, Shares, Views</p>
-<textarea id="pasteInstagram" rows="3" placeholder="Plak hier de Instagram-tabel (tab-gescheiden)" style="width:100%;margin-bottom:6px"></textarea>
-<button id="parseInstagramBtn" style="margin-bottom:16px">Instagram-tabel toevoegen</button>
-<p id="parseStatus" class="hint"></p>
-
-<p class="section-title">Volgers per maand (handmatig uit Meta/Instagram Insights)</p>
+<p class="section-title">Volgers per maand</p>
+<p class="hint">Dit staat niet in de export, dus vul dit maandelijks even zelf aan uit Meta/Instagram Insights.</p>
 <div class="grid4" style="margin-bottom:8px">
 <input type="month" id="fsMonth">
 <input type="number" id="fsTotal" placeholder="Totaal volgers">
@@ -155,11 +195,22 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px}
 <button id="addFollowerBtn" style="margin-bottom:20px">Opslaan</button>
 <div id="followerList"></div>
 
-<p class="section-title" style="margin-top:24px">Alle posts beheren</p>
+<details style="margin-top:24px">
+<summary style="cursor:pointer;font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;color:var(--forest)">Back-up en beheer</summary>
+<div style="margin-top:14px">
+<p class="hint">De data staat alleen lokaal in deze browser. Exporteer een back-up om over te zetten naar een andere computer of te delen met een collega.</p>
+<div style="display:flex;gap:8px;margin-bottom:20px">
+<button id="exportBtn">Exporteer data (.json)</button>
+<label for="importFile" style="display:inline-block;padding:9px 12px;border:1.5px solid var(--border-strong);border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2)">Importeer data</label>
+<input type="file" id="importFile" accept=".json" style="display:none">
+</div>
+<p class="section-title" style="font-size:15px">Alle posts beheren</p>
 <div id="managePostsList"></div>
 </div>
+</details>
+</div>
 
-<div id="tab-ai" class="tabpane">
+<div id="tab-ai" class="tabpane card-block">
 <label>Focusperiode</label>
 <select id="aiFocus" style="margin-bottom:16px">
 <option value="month">Afgelopen maand</option>
@@ -173,10 +224,36 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px}
 <textarea id="aiPromptOut" rows="10" style="width:100%;margin-bottom:8px" readonly></textarea>
 <button id="aiCopyBtn">Kopieer naar klembord</button>
 </div>
+
+<div id="tab-widgets" class="tabpane card-block">
+<p class="section-title">Widget toevoegen</p>
+<div class="grid3" style="margin-bottom:10px">
+<select id="wgMetric">
+<option value="likes">Likes</option>
+<option value="comments">Reacties</option>
+<option value="shares">Doorsturen</option>
+<option value="reach">Bereik</option>
+<option value="views">Weergaven</option>
+<option value="engagement">Engagement</option>
+</select>
+<select id="wgGroup">
+<option value="platform">Per platform</option>
+<option value="month">Per maand</option>
+</select>
+<select id="wgType">
+<option value="bar">Staafdiagram</option>
+<option value="pie">Cirkeldiagram</option>
+</select>
+</div>
+<button id="addWidgetBtn" style="margin-bottom:24px">Widget toevoegen</button>
+<div id="widgetsGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px"></div>
+</div>
+</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 const STORAGE_KEY = 'hg-marketing-dashboard';
 
@@ -200,12 +277,13 @@ const seedPosts = [
 ];
 const seedFollowers = [{id:'f2026-06',month:'2026-06',totalFollowers:0,newFollowers:0,targetPct:0}];
 
-let state = {posts:seedPosts, followerStats:seedFollowers};
+let state = {posts:seedPosts, followerStats:seedFollowers, widgets:[]};
 try{
   const raw = localStorage.getItem(STORAGE_KEY);
   if(raw) state = JSON.parse(raw);
   else localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }catch(e){}
+if(!state.widgets) state.widgets = [];
 
 let charts = {};
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
@@ -246,31 +324,35 @@ function renderCharts(){
   const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
   const muted = isDark ? '#c3c2b7' : '#52514e';
   const grid = isDark ? '#2c2c2a' : '#e1e0d9';
-  const opts = {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:true,labels:{color:muted,boxWidth:10,font:{size:11}}}}, scales:{x:{grid:{display:false},ticks:{color:muted}},y:{grid:{color:grid},ticks:{color:muted}}}};
+  const opts = {responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index', intersect:false},
+    plugins:{legend:{display:true,labels:{color:muted,boxWidth:12,font:{size:12}}},
+      tooltip:{callbacks:{label:(ctx)=> ctx.dataset.label+': '+fmtNum(ctx.parsed.y)}}},
+    scales:{x:{grid:{display:false},ticks:{color:muted,font:{size:11}}},y:{grid:{color:grid},ticks:{color:muted,font:{size:11},callback:v=>fmtNum(v)},beginAtZero:true}}};
 
-  const ptR = months.length<2 ? 6 : 3;
+  const ptR = months.length<2 ? 6 : 4;
   charts.eng = new Chart(document.getElementById('chartEngagement'), {type:'line',
     data:{labels:months, datasets:[
-      {label:'Facebook', data:months.map(m=>monthMap[m].fbEng), borderColor:'#2a78d6', backgroundColor:'#2a78d6', tension:0.2, pointRadius:ptR},
-      {label:'Instagram', data:months.map(m=>monthMap[m].igEng), borderColor:'#e87ba4', backgroundColor:'#e87ba4', tension:0.2, pointRadius:ptR}
+      {label:'Facebook', data:months.map(m=>monthMap[m].fbEng), borderColor:'#2f5233', backgroundColor:'rgba(47,82,51,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25},
+      {label:'Instagram', data:months.map(m=>monthMap[m].igEng), borderColor:'#c0392b', backgroundColor:'rgba(192,57,43,0.12)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25}
     ]}, options:opts});
   document.getElementById('hintEngagement').textContent = months.length<2 ? 'Nog maar '+months.length+' periode(s) - voeg een volgende maand toe voor een lijn.' : '';
 
   charts.reach = new Chart(document.getElementById('chartReach'), {type:'line',
     data:{labels:months, datasets:[
-      {label:'Bereik (Instagram)', data:months.map(m=>monthMap[m].reach), borderColor:'#1baf7a', backgroundColor:'#1baf7a', tension:0.2, pointRadius:ptR},
-      {label:'Weergaven (totaal)', data:months.map(m=>monthMap[m].views), borderColor:'#eda100', backgroundColor:'#eda100', tension:0.2, pointRadius:ptR}
+      {label:'Bereik (Instagram)', data:months.map(m=>monthMap[m].reach), borderColor:'#2f5233', backgroundColor:'rgba(47,82,51,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25},
+      {label:'Weergaven (totaal)', data:months.map(m=>monthMap[m].views), borderColor:'#d99a1f', backgroundColor:'rgba(217,154,31,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25}
     ]}, options:opts});
   document.getElementById('hintReach').textContent = months.length<2 ? 'Nog maar '+months.length+' periode(s) - voeg een volgende maand toe voor een lijn.' : '';
 
   const fs = [...state.followerStats].sort((a,b)=>a.month.localeCompare(b.month));
-  const ptR2 = fs.length<2 ? 6 : 3;
+  const ptR2 = fs.length<2 ? 6 : 4;
   charts.tot = new Chart(document.getElementById('chartTotalFollowers'), {type:'line',
-    data:{labels:fs.map(f=>f.month), datasets:[{label:'Totaal volgers', data:fs.map(f=>f.totalFollowers), borderColor:'#4a3aa7', backgroundColor:'#4a3aa7', tension:0.2, pointRadius:ptR2}]},
-    options:{...opts, plugins:{legend:{display:false}}}});
+    data:{labels:fs.map(f=>f.month), datasets:[{label:'Totaal volgers', data:fs.map(f=>f.totalFollowers), borderColor:'#7a4fa0', backgroundColor:'rgba(122,79,160,0.14)', borderWidth:2.5, pointRadius:ptR2, pointHoverRadius:ptR2+2, fill:true, tension:0.25}]},
+    options:{...opts, plugins:{...opts.plugins, legend:{display:false}}}});
   document.getElementById('hintTotal').textContent = fs.length<2 ? 'Nog maar '+fs.length+' maand(en) ingevuld - voeg volgers per maand toe bij "Data invoeren".' : '';
   charts.new = new Chart(document.getElementById('chartNewFollowers'), {type:'bar',
-    data:{labels:fs.map(f=>f.month), datasets:[{label:'Nieuwe volgers', data:fs.map(f=>f.newFollowers), backgroundColor:'#2a78d6', borderRadius:4}]},
+    data:{labels:fs.map(f=>f.month), datasets:[{label:'Nieuwe volgers', data:fs.map(f=>f.newFollowers), backgroundColor:'#d99a1f', borderRadius:4}]},
     options:{...opts, plugins:{legend:{display:false}}}});
   document.getElementById('hintNew').textContent = '';
 }
@@ -320,51 +402,9 @@ function renderManageList(){
   }));
 }
 
-document.getElementById('addPostBtn').addEventListener('click', ()=>{
-  const date=document.getElementById('npDate').value;
-  if(!date) return;
-  state.posts.push({id:'p'+Date.now(), platform:document.getElementById('npPlatform').value, date, text:document.getElementById('npText').value||'(geen titel)',
-    likes:+document.getElementById('npLikes').value||0, comments:+document.getElementById('npComments').value||0, shares:+document.getElementById('npShares').value||0,
-    reach:+document.getElementById('npReach').value||0, views:+document.getElementById('npViews').value||0, engagement:+document.getElementById('npEngagement').value||0});
-  saveState(); renderAll();
-  ['npDate','npText','npLikes','npComments','npShares','npReach','npViews','npEngagement'].forEach(id=>document.getElementById(id).value='');
-});
-
 function splitLine(l){ return l.includes('\t') ? l.split('\t') : l.split(/\s{2,}/); }
 function cleanNum(v){ if(v===undefined) return 0; const n=parseFloat(String(v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
 function cleanDate(v){ if(!v) return ''; const s=String(v).trim(); const m=s.match(/\d{4}-\d{2}-\d{2}/); if(m) return m[0]; const d=new Date(s); return isNaN(d)? '' : d.toISOString().slice(0,10); }
-
-document.getElementById('parseFacebookBtn').addEventListener('click', ()=>{
-  const lines = document.getElementById('pasteFacebook').value.split('\n').map(l=>l.trim()).filter(Boolean);
-  let added=0;
-  lines.forEach(l=>{
-    const c = splitLine(l);
-    const date = cleanDate(c[0]);
-    if(!date) return;
-    state.posts.push({id:'p'+Date.now()+Math.random(), platform:'Facebook', date, text:(c[2]||'').slice(0,60),
-      comments:cleanNum(c[3]), engagement:cleanNum(c[4]), likes:cleanNum(c[5]), shares:cleanNum(c[6]), views:cleanNum(c[7]), reach:0});
-    added++;
-  });
-  document.getElementById('parseStatus').textContent = added+' Facebook-posts toegevoegd.';
-  document.getElementById('pasteFacebook').value='';
-  saveState(); renderAll();
-});
-
-document.getElementById('parseInstagramBtn').addEventListener('click', ()=>{
-  const lines = document.getElementById('pasteInstagram').value.split('\n').map(l=>l.trim()).filter(Boolean);
-  let added=0;
-  lines.forEach(l=>{
-    const c = splitLine(l);
-    const date = cleanDate(c[0]);
-    if(!date) return;
-    state.posts.push({id:'p'+Date.now()+Math.random(), platform:'Instagram', date, text:(c[3]||'').slice(0,60),
-      comments:cleanNum(c[4]), engagement:cleanNum(c[5]), likes:cleanNum(c[7]), reach:cleanNum(c[8]), shares:cleanNum(c[10]), views:cleanNum(c[11])});
-    added++;
-  });
-  document.getElementById('parseStatus').textContent = added+' Instagram-posts toegevoegd.';
-  document.getElementById('pasteInstagram').value='';
-  saveState(); renderAll();
-});
 
 document.getElementById('addFollowerBtn').addEventListener('click', ()=>{
   const month = document.getElementById('fsMonth').value;
@@ -490,7 +530,90 @@ document.getElementById('importFile').addEventListener('change', (e)=>{
   reader.readAsText(file);
 });
 
-function renderAll(){ renderMetricCards(); renderCharts(); renderPostsTab(); renderManageList(); }
+if(window['pdfjsLib']) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+document.getElementById('pdfUpload').addEventListener('change', async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  document.getElementById('pdfStatus').textContent = 'Bezig met uitlezen...';
+  try{
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+    const rows = [];
+    for(let p=1; p<=pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      const lineMap = {};
+      content.items.forEach(item=>{
+        const y = Math.round(item.transform[5]/3)*3;
+        if(!lineMap[y]) lineMap[y] = [];
+        lineMap[y].push({x:item.transform[4], text:item.str});
+      });
+      Object.keys(lineMap).map(Number).sort((a,b)=>b-a).forEach(y=>{
+        const cells = lineMap[y].sort((a,b)=>a.x-b.x).map(c=>c.text.trim()).filter(Boolean);
+        if(cells.length) rows.push(cells.join('\t'));
+      });
+    }
+    const rowsArr = rows.map(r=>r.split('\t'));
+    let added = parseFacebookSheet(rowsArr);
+    added += parseInstagramSheet(rowsArr);
+    if(added>0){ document.getElementById('pdfStatus').textContent = added+' posts toegevoegd uit '+file.name+'.'; saveState(); renderAll(); }
+    else { document.getElementById('pdfStatus').textContent = 'Geen posts herkend in dit PDF-bestand. Mogelijk is de lay-out te afwijkend — probeer de Excel-export in plaats daarvan.'; }
+  }catch(err){
+    document.getElementById('pdfStatus').textContent = 'Kon de PDF niet uitlezen: '+err.message;
+  }
+  e.target.value='';
+});
+
+function widgetAggregate(metric, groupBy){
+  const posts = state.posts;
+  if(groupBy==='platform'){
+    const fb = posts.filter(p=>p.platform==='Facebook').reduce((a,p)=>a+p[metric],0);
+    const ig = posts.filter(p=>p.platform==='Instagram').reduce((a,p)=>a+p[metric],0);
+    return {labels:['Facebook','Instagram'], data:[fb,ig], colors:['#2f5233','#c0392b']};
+  } else {
+    const map = {};
+    posts.forEach(p=>{ const k=monthKey(p.date); map[k]=(map[k]||0)+p[metric]; });
+    const labels = Object.keys(map).sort();
+    const palette = ['#2f5233','#c0392b','#d99a1f','#7a4fa0','#4d7a52','#8c4a3e'];
+    return {labels, data:labels.map(l=>map[l]), colors:labels.map((_,i)=>palette[i%palette.length])};
+  }
+}
+const metricLabels = {likes:'Likes', comments:'Reacties', shares:'Doorsturen', reach:'Bereik', views:'Weergaven', engagement:'Engagement'};
+const groupLabels = {platform:'per platform', month:'per maand'};
+
+function renderWidgets(){
+  Object.keys(charts).forEach(k=>{ if(k.startsWith('widget_')){ charts[k].destroy(); delete charts[k]; } });
+  const grid = document.getElementById('widgetsGrid');
+  grid.innerHTML = state.widgets.map(w=>
+    '<div class="postcard"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><p style="font-weight:600;font-size:13px;margin:0">'+metricLabels[w.metric]+' '+groupLabels[w.groupBy]+'</p><button class="delbtn" data-wid="'+w.id+'">verwijderen</button></div><div style="position:relative;height:200px"><canvas id="canvas_'+w.id+'"></canvas></div></div>'
+  ).join('');
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const muted = isDark ? '#c3c2b7' : '#52514e';
+  state.widgets.forEach(w=>{
+    const agg = widgetAggregate(w.metric, w.groupBy);
+    const canvas = document.getElementById('canvas_'+w.id);
+    if(!canvas) return;
+    if(w.chartType==='pie'){
+      charts['widget_'+w.id] = new Chart(canvas, {type:'pie',
+        data:{labels:agg.labels, datasets:[{data:agg.data, backgroundColor:agg.colors}]},
+        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{color:muted,font:{size:11}}}, tooltip:{callbacks:{label:ctx=>ctx.label+': '+fmtNum(ctx.parsed)}}}}});
+    } else {
+      charts['widget_'+w.id] = new Chart(canvas, {type:'bar',
+        data:{labels:agg.labels, datasets:[{data:agg.data, backgroundColor:agg.colors, borderRadius:4}]},
+        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtNum(ctx.parsed.y)}}}, scales:{x:{grid:{display:false},ticks:{color:muted}},y:{grid:{color:isDark?'#2c2c2a':'#e1e0d9'},ticks:{color:muted,callback:v=>fmtNum(v)},beginAtZero:true}}}});
+    }
+  });
+  document.querySelectorAll('#widgetsGrid .delbtn').forEach(b=>b.addEventListener('click', ()=>{
+    state.widgets = state.widgets.filter(w=>w.id!==b.dataset.wid);
+    saveState(); renderWidgets();
+  }));
+}
+document.getElementById('addWidgetBtn').addEventListener('click', ()=>{
+  state.widgets.push({id:'w'+Date.now(), metric:document.getElementById('wgMetric').value, groupBy:document.getElementById('wgGroup').value, chartType:document.getElementById('wgType').value});
+  saveState(); renderWidgets();
+});
+
+function renderAll(){ renderMetricCards(); renderCharts(); renderPostsTab(); renderManageList(); renderWidgets(); }
 switchTab('overview');
 renderAll();
 
