@@ -116,10 +116,17 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <div class="metriccards" id="metriccards"></div>
 
 <div id="tab-overview" class="tabpane card-block">
-<p class="hint">Engagement per maand</p>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+<label style="margin:0">Weergeven per</label>
+<select id="overviewGranularity" style="width:auto">
+<option value="month">Maand</option>
+<option value="week">Week</option>
+</select>
+</div>
+<p class="hint" id="labelEngagement">Engagement per maand</p>
 <div class="chart-wrap"><canvas id="chartEngagement"></canvas></div>
 <p id="hintEngagement" class="hint" style="margin-top:-16px"></p>
-<p class="hint">Bereik en weergaven per maand</p>
+<p class="hint" id="labelReach">Bereik en weergaven per maand</p>
 <div class="chart-wrap"><canvas id="chartReach"></canvas></div>
 <p id="hintReach" class="hint" style="margin-top:-16px"></p>
 <p class="hint">Totaal volgers per maand</p>
@@ -306,10 +313,23 @@ function renderMetricCards(){
   document.getElementById('metriccards').innerHTML = cards.map(c=>'<div class="mc"><p>'+c[0]+'</p><p>'+c[1]+'</p></div>').join('');
 }
 
-function aggregateByMonth(posts){
+function isoWeekKey(dateStr){
+  const date = new Date(dateStr+'T00:00:00Z');
+  const target = new Date(date.valueOf());
+  const dayNr = (date.getUTCDay()+6)%7;
+  target.setUTCDate(target.getUTCDate()-dayNr+3);
+  const firstThursday = target.valueOf();
+  target.setUTCMonth(0,1);
+  if(target.getUTCDay()!==4){ target.setUTCMonth(0, 1 + ((4-target.getUTCDay())+7)%7); }
+  const week = 1 + Math.round((firstThursday-target)/(7*86400000));
+  return target.getUTCFullYear()+'-W'+String(week).padStart(2,'0');
+}
+function periodKey(d, granularity){ return granularity==='week' ? isoWeekKey(d) : monthKey(d); }
+
+function aggregateByPeriod(posts, granularity){
   const map = {};
   posts.forEach(p=>{
-    const k = monthKey(p.date);
+    const k = periodKey(p.date, granularity);
     if(!map[k]) map[k]={fbEng:0,igEng:0,reach:0,views:0};
     if(p.platform==='Facebook') map[k].fbEng+=p.engagement; else map[k].igEng+=p.engagement;
     map[k].reach+=p.reach; map[k].views+=p.views;
@@ -319,7 +339,11 @@ function aggregateByMonth(posts){
 
 function renderCharts(){
   Object.values(charts).forEach(c=>c && c.destroy());
-  const monthMap = aggregateByMonth(state.posts);
+  const granularity = document.getElementById('overviewGranularity').value;
+  const gWord = granularity==='week' ? 'week' : 'maand';
+  document.getElementById('labelEngagement').textContent = 'Engagement per '+gWord;
+  document.getElementById('labelReach').textContent = 'Bereik en weergaven per '+gWord;
+  const monthMap = aggregateByPeriod(state.posts, granularity);
   const months = Object.keys(monthMap).sort();
   const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
   const muted = isDark ? '#c3c2b7' : '#52514e';
@@ -336,14 +360,14 @@ function renderCharts(){
       {label:'Facebook', data:months.map(m=>monthMap[m].fbEng), borderColor:'#2f5233', backgroundColor:'rgba(47,82,51,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25},
       {label:'Instagram', data:months.map(m=>monthMap[m].igEng), borderColor:'#c0392b', backgroundColor:'rgba(192,57,43,0.12)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25}
     ]}, options:opts});
-  document.getElementById('hintEngagement').textContent = months.length<2 ? 'Nog maar '+months.length+' periode(s) - voeg een volgende maand toe voor een lijn.' : '';
+  document.getElementById('hintEngagement').textContent = months.length<2 ? 'Nog maar '+months.length+' periode(s) - voeg een volgende '+gWord+' toe voor een lijn.' : '';
 
   charts.reach = new Chart(document.getElementById('chartReach'), {type:'line',
     data:{labels:months, datasets:[
       {label:'Bereik (Instagram)', data:months.map(m=>monthMap[m].reach), borderColor:'#2f5233', backgroundColor:'rgba(47,82,51,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25},
       {label:'Weergaven (totaal)', data:months.map(m=>monthMap[m].views), borderColor:'#d99a1f', backgroundColor:'rgba(217,154,31,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25}
     ]}, options:opts});
-  document.getElementById('hintReach').textContent = months.length<2 ? 'Nog maar '+months.length+' periode(s) - voeg een volgende maand toe voor een lijn.' : '';
+  document.getElementById('hintReach').textContent = months.length<2 ? 'Nog maar '+months.length+' periode(s) - voeg een volgende '+gWord+' toe voor een lijn.' : '';
 
   const fs = [...state.followerStats].sort((a,b)=>a.month.localeCompare(b.month));
   const ptR2 = fs.length<2 ? 6 : 4;
@@ -612,6 +636,8 @@ document.getElementById('addWidgetBtn').addEventListener('click', ()=>{
   state.widgets.push({id:'w'+Date.now(), metric:document.getElementById('wgMetric').value, groupBy:document.getElementById('wgGroup').value, chartType:document.getElementById('wgType').value});
   saveState(); renderWidgets();
 });
+
+document.getElementById('overviewGranularity').addEventListener('change', renderCharts);
 
 function renderAll(){ renderMetricCards(); renderCharts(); renderPostsTab(); renderManageList(); renderWidgets(); }
 switchTab('overview');
