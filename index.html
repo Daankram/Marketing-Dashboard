@@ -37,8 +37,11 @@ body{
 }
 .page-wrap{max-width:920px;margin:0 auto;padding:0 24px}
 .hg-header{
-  background:linear-gradient(135deg, var(--forest) 0%, var(--forest-dark) 100%);
-  color:#fff; padding:28px 24px 34px; margin-bottom:28px; position:relative; overflow:hidden;
+  background:
+    linear-gradient(135deg, rgba(31,58,35,0.88) 0%, rgba(31,58,35,0.82) 100%),
+    url('assets/achtergrond.png');
+  background-size:cover; background-position:center 70%;
+  color:#fff; padding:36px 24px 40px; margin-bottom:28px; position:relative; overflow:hidden;
 }
 .hg-header::after{
   content:''; position:absolute; left:0; right:0; bottom:0; height:14px;
@@ -47,7 +50,7 @@ body{
 }
 .hg-header-inner{max-width:920px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
 .hg-eyebrow{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#e8d9a8;font-weight:700;margin:0 0 6px}
-h1{font-family:'Fredoka',sans-serif;font-size:26px;font-weight:600;margin:0 0 4px;color:#fff}
+h1{font-family:'Fredoka',sans-serif;font-size:26px;font-weight:600;margin:0 0 4px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.25)}
 .hg-sub{font-size:13px;color:#dcead9;margin:0}
 .tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
 .tabbtn{
@@ -89,9 +92,10 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 </head>
 <body>
 <div id="gate" style="position:fixed;inset:0;background:linear-gradient(135deg, var(--forest) 0%, var(--forest-dark) 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px">
-<div style="text-align:center;max-width:300px;background:var(--card);padding:32px 28px;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,0.25)">
+<div style="text-align:center;max-width:300px;background:var(--card);padding:20px 28px 32px;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,0.25)">
+<img src="assets/heks.png" alt="" style="width:100px;margin:-46px auto 6px;display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,0.3))">
 <p style="font-family:'Fredoka',sans-serif;font-size:19px;margin:0 0 4px;color:var(--forest);font-weight:600">Hans &amp; Grietje</p>
-<p style="font-size:12px;margin:0 0 18px;color:var(--text2)">Marketing dashboard</p>
+<p style="font-size:12px;margin:0 0 18px;color:var(--text2)">De heks bewaakt het dashboard — voer de toegangscode in</p>
 <input type="password" id="gateCode" placeholder="Toegangscode" style="width:100%;margin-bottom:10px;text-align:center" autocomplete="off">
 <br>
 <button id="gateBtn" style="width:100%">Openen</button>
@@ -126,9 +130,12 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <p class="hint" id="labelEngagement">Engagement per maand</p>
 <div class="chart-wrap"><canvas id="chartEngagement"></canvas></div>
 <p id="hintEngagement" class="hint" style="margin-top:-16px"></p>
-<p class="hint" id="labelReach">Bereik en weergaven per maand</p>
+<p class="hint" id="labelReach">Bereik per maand</p>
 <div class="chart-wrap"><canvas id="chartReach"></canvas></div>
 <p id="hintReach" class="hint" style="margin-top:-16px"></p>
+<p class="hint" id="labelViews">Weergaven per maand</p>
+<div class="chart-wrap"><canvas id="chartViews"></canvas></div>
+<p id="hintViews" class="hint" style="margin-top:-16px"></p>
 <p class="hint">Totaal volgers per maand</p>
 <div class="chart-wrap" style="height:180px"><canvas id="chartTotalFollowers"></canvas></div>
 <p id="hintTotal" class="hint" style="margin-top:-8px"></p>
@@ -169,7 +176,20 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 </select>
 </div>
 <div class="grid2" id="topWorstRow" style="margin-bottom:20px"></div>
+<p class="hint">Klik op een post voor alle details.</p>
 <div style="overflow-x:auto"><table id="postsTable"></table></div>
+</div>
+
+<div id="postModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9998;align-items:center;justify-content:center;padding:20px">
+<div style="background:var(--card);border-radius:var(--radius);padding:24px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,0.3)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+<p style="font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;margin:0;color:var(--forest)" id="pmPlatform"></p>
+<button id="pmClose" style="background:transparent;border:none;color:var(--text2);font-size:18px;padding:0 4px">&times;</button>
+</div>
+<p class="hint" style="margin:0 0 4px" id="pmDate"></p>
+<p style="font-size:14px;margin:0 0 16px;color:var(--text)" id="pmText"></p>
+<div id="pmStats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+</div>
 </div>
 
 <div id="tab-input" class="tabpane card-block">
@@ -234,7 +254,8 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 
 <div id="tab-widgets" class="tabpane card-block">
 <p class="section-title">Widget toevoegen</p>
-<div class="grid3" style="margin-bottom:10px">
+<p class="hint">Stel zelf samen: welke metriek, van welk platform, hoe gegroepeerd, en in welk type grafiek.</p>
+<div class="grid2" style="margin-bottom:10px">
 <select id="wgMetric">
 <option value="likes">Likes</option>
 <option value="comments">Reacties</option>
@@ -243,17 +264,32 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <option value="views">Weergaven</option>
 <option value="engagement">Engagement</option>
 </select>
+<select id="wgPlatform">
+<option value="all">Alle platformen</option>
+<option value="Facebook">Alleen Facebook</option>
+<option value="Instagram">Alleen Instagram</option>
+</select>
+</div>
+<div class="grid2" style="margin-bottom:10px">
 <select id="wgGroup">
 <option value="platform">Per platform</option>
 <option value="month">Per maand</option>
+<option value="week">Per week</option>
+<option value="post">Losse posts (top 10)</option>
 </select>
 <select id="wgType">
 <option value="bar">Staafdiagram</option>
 <option value="pie">Cirkeldiagram</option>
+<option value="line">Lijndiagram</option>
 </select>
 </div>
 <button id="addWidgetBtn" style="margin-bottom:24px">Widget toevoegen</button>
 <div id="widgetsGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px"></div>
+</div>
+
+<div style="text-align:center;margin-top:12px;opacity:0.9">
+<img src="assets/snoephuisje.png" alt="Hans en Grietje bij het snoephuisje" style="width:180px;max-width:60%">
+<p class="hint" style="margin-top:-8px">Hans &amp; Grietje Pannenkoekenhuis en Speelpark · Zeewolde</p>
 </div>
 </div>
 </div>
@@ -330,9 +366,9 @@ function aggregateByPeriod(posts, granularity){
   const map = {};
   posts.forEach(p=>{
     const k = periodKey(p.date, granularity);
-    if(!map[k]) map[k]={fbEng:0,igEng:0,reach:0,views:0};
-    if(p.platform==='Facebook') map[k].fbEng+=p.engagement; else map[k].igEng+=p.engagement;
-    map[k].reach+=p.reach; map[k].views+=p.views;
+    if(!map[k]) map[k]={fbEng:0,igEng:0,fbReach:0,igReach:0,fbViews:0,igViews:0};
+    if(p.platform==='Facebook'){ map[k].fbEng+=p.engagement; map[k].fbReach+=p.reach; map[k].fbViews+=p.views; }
+    else { map[k].igEng+=p.engagement; map[k].igReach+=p.reach; map[k].igViews+=p.views; }
   });
   return map;
 }
@@ -342,7 +378,8 @@ function renderCharts(){
   const granularity = document.getElementById('overviewGranularity').value;
   const gWord = granularity==='week' ? 'week' : 'maand';
   document.getElementById('labelEngagement').textContent = 'Engagement per '+gWord;
-  document.getElementById('labelReach').textContent = 'Bereik en weergaven per '+gWord;
+  document.getElementById('labelReach').textContent = 'Bereik per '+gWord;
+  document.getElementById('labelViews').textContent = 'Weergaven per '+gWord;
   const monthMap = aggregateByPeriod(state.posts, granularity);
   const months = Object.keys(monthMap).sort();
   const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
@@ -364,10 +401,17 @@ function renderCharts(){
 
   charts.reach = new Chart(document.getElementById('chartReach'), {type:'line',
     data:{labels:months, datasets:[
-      {label:'Bereik (Instagram)', data:months.map(m=>monthMap[m].reach), borderColor:'#2f5233', backgroundColor:'rgba(47,82,51,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25},
-      {label:'Weergaven (totaal)', data:months.map(m=>monthMap[m].views), borderColor:'#d99a1f', backgroundColor:'rgba(217,154,31,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25}
+      {label:'Facebook', data:months.map(m=>monthMap[m].fbReach), borderColor:'#2f5233', backgroundColor:'rgba(47,82,51,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25},
+      {label:'Instagram', data:months.map(m=>monthMap[m].igReach), borderColor:'#c0392b', backgroundColor:'rgba(192,57,43,0.12)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25}
     ]}, options:opts});
-  document.getElementById('hintReach').textContent = months.length<2 ? 'Nog maar '+months.length+' periode(s) - voeg een volgende '+gWord+' toe voor een lijn.' : '';
+  document.getElementById('hintReach').textContent = (months.length<2 ? 'Nog maar '+months.length+' periode(s) - voeg een volgende '+gWord+' toe voor een lijn. ' : '') + 'Let op: Facebook levert in deze export geen bereikcijfer, dus die lijn kan op 0 blijven staan.';
+
+  charts.views = new Chart(document.getElementById('chartViews'), {type:'line',
+    data:{labels:months, datasets:[
+      {label:'Facebook', data:months.map(m=>monthMap[m].fbViews), borderColor:'#2f5233', backgroundColor:'rgba(47,82,51,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25},
+      {label:'Instagram', data:months.map(m=>monthMap[m].igViews), borderColor:'#d99a1f', backgroundColor:'rgba(217,154,31,0.14)', borderWidth:2.5, pointRadius:ptR, pointHoverRadius:ptR+2, fill:true, tension:0.25}
+    ]}, options:opts});
+  document.getElementById('hintViews').textContent = months.length<2 ? 'Nog maar '+months.length+' periode(s) - voeg een volgende '+gWord+' toe voor een lijn.' : '';
 
   const fs = [...state.followerStats].sort((a,b)=>a.month.localeCompare(b.month));
   const ptR2 = fs.length<2 ? 6 : 4;
@@ -402,14 +446,28 @@ function renderPostsTab(){
   let posts = state.posts.filter(p=> plat==='all' || p.platform===plat);
   const sorted = [...posts].sort((a,b)=>b[metric]-a[metric]);
   const best = sorted.slice(0,3), worst = sorted.slice(-3).reverse();
-  const cardHtml=(title,list)=> '<div class="postcard"><p style="font-weight:600;font-size:13px;margin:0 0 8px">'+title+'</p>'+ (list.length? list.map(p=>'<div class="postrow"><span>'+p.date+' - '+p.platform+' - '+p.text.slice(0,28)+'</span><span style="font-weight:600">'+fmtNum(p[metric])+'</span></div>').join('') : '<p class="hint">Geen data</p>') + '</div>';
+  const cardHtml=(title,list)=> '<div class="postcard"><p style="font-weight:600;font-size:13px;margin:0 0 8px">'+title+'</p>'+ (list.length? list.map(p=>'<div class="postrow post-clickable" data-id="'+p.id+'" style="cursor:pointer"><span>'+p.date+' - '+p.platform+' - '+p.text.slice(0,28)+'</span><span style="font-weight:600">'+fmtNum(p[metric])+'</span></div>').join('') : '<p class="hint">Geen data</p>') + '</div>';
   document.getElementById('topWorstRow').innerHTML = cardHtml('Top 3 best presterend', best) + cardHtml('Top 3 slechtst presterend', worst);
   let html='<tr><th>Datum</th><th>Platform</th><th>Post</th><th>Likes</th><th>Reacties</th><th>Doorsturen</th><th>Bereik</th><th>Weergaven</th><th>Engagement</th></tr>';
-  sorted.forEach(p=>{ html+='<tr><td>'+p.date+'</td><td>'+p.platform+'</td><td>'+p.text.slice(0,30)+'</td><td>'+fmtNum(p.likes)+'</td><td>'+fmtNum(p.comments)+'</td><td>'+fmtNum(p.shares)+'</td><td>'+fmtNum(p.reach)+'</td><td>'+fmtNum(p.views)+'</td><td>'+fmtNum(p.engagement)+'</td></tr>'; });
+  sorted.forEach(p=>{ html+='<tr class="post-clickable" data-id="'+p.id+'" style="cursor:pointer"><td>'+p.date+'</td><td>'+p.platform+'</td><td>'+p.text.slice(0,30)+'</td><td>'+fmtNum(p.likes)+'</td><td>'+fmtNum(p.comments)+'</td><td>'+fmtNum(p.shares)+'</td><td>'+fmtNum(p.reach)+'</td><td>'+fmtNum(p.views)+'</td><td>'+fmtNum(p.engagement)+'</td></tr>'; });
   document.getElementById('postsTable').innerHTML=html;
+  document.querySelectorAll('.post-clickable').forEach(el=>el.addEventListener('click', ()=>openPostDetail(el.dataset.id)));
 }
 document.getElementById('postsPlatformFilter').addEventListener('change', renderPostsTab);
 document.getElementById('postsMetric').addEventListener('change', renderPostsTab);
+
+function openPostDetail(id){
+  const p = state.posts.find(x=>x.id===id); if(!p) return;
+  document.getElementById('pmPlatform').textContent = p.platform;
+  document.getElementById('pmDate').textContent = p.date;
+  document.getElementById('pmText').textContent = p.text;
+  const stats = [['Likes',p.likes],['Reacties',p.comments],['Doorsturen',p.shares],['Bereik',p.reach],['Weergaven',p.views],['Engagement',p.engagement]];
+  document.getElementById('pmStats').innerHTML = stats.map(s=>'<div class="mc" style="padding:10px 12px"><p style="margin:0 0 2px;font-size:11px">'+s[0]+'</p><p style="margin:0;font-size:17px">'+fmtNum(s[1])+'</p></div>').join('');
+  document.getElementById('postModalOverlay').style.display='flex';
+}
+document.getElementById('pmClose').addEventListener('click', ()=>{ document.getElementById('postModalOverlay').style.display='none'; });
+document.getElementById('postModalOverlay').addEventListener('click', (e)=>{ if(e.target.id==='postModalOverlay') document.getElementById('postModalOverlay').style.display='none'; });
+
 
 function renderManageList(){
   const sorted=[...state.posts].sort((a,b)=>b.date.localeCompare(a.date));
@@ -588,43 +646,52 @@ document.getElementById('pdfUpload').addEventListener('change', async (e)=>{
   e.target.value='';
 });
 
-function widgetAggregate(metric, groupBy){
-  const posts = state.posts;
+function widgetAggregate(metric, groupBy, platformFilter){
+  let posts = state.posts;
+  if(platformFilter && platformFilter!=='all') posts = posts.filter(p=>p.platform===platformFilter);
+  const palette = ['#2f5233','#c0392b','#d99a1f','#7a4fa0','#4d7a52','#8c4a3e'];
   if(groupBy==='platform'){
     const fb = posts.filter(p=>p.platform==='Facebook').reduce((a,p)=>a+p[metric],0);
     const ig = posts.filter(p=>p.platform==='Instagram').reduce((a,p)=>a+p[metric],0);
     return {labels:['Facebook','Instagram'], data:[fb,ig], colors:['#2f5233','#c0392b']};
-  } else {
+  } else if(groupBy==='month' || groupBy==='week'){
     const map = {};
-    posts.forEach(p=>{ const k=monthKey(p.date); map[k]=(map[k]||0)+p[metric]; });
+    posts.forEach(p=>{ const k=periodKey(p.date, groupBy); map[k]=(map[k]||0)+p[metric]; });
     const labels = Object.keys(map).sort();
-    const palette = ['#2f5233','#c0392b','#d99a1f','#7a4fa0','#4d7a52','#8c4a3e'];
     return {labels, data:labels.map(l=>map[l]), colors:labels.map((_,i)=>palette[i%palette.length])};
+  } else {
+    const sorted = [...posts].sort((a,b)=>b[metric]-a[metric]).slice(0,10);
+    return {labels:sorted.map(p=>p.date+' '+p.text.slice(0,16)), data:sorted.map(p=>p[metric]), colors:sorted.map(p=>p.platform==='Facebook'?'#2f5233':'#c0392b')};
   }
 }
 const metricLabels = {likes:'Likes', comments:'Reacties', shares:'Doorsturen', reach:'Bereik', views:'Weergaven', engagement:'Engagement'};
-const groupLabels = {platform:'per platform', month:'per maand'};
+const groupLabels = {platform:'per platform', month:'per maand', week:'per week', post:'per post (top 10)'};
+const platformLabels = {all:'', Facebook:' - alleen Facebook', Instagram:' - alleen Instagram'};
 
 function renderWidgets(){
   Object.keys(charts).forEach(k=>{ if(k.startsWith('widget_')){ charts[k].destroy(); delete charts[k]; } });
   const grid = document.getElementById('widgetsGrid');
   grid.innerHTML = state.widgets.map(w=>
-    '<div class="postcard"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><p style="font-weight:600;font-size:13px;margin:0">'+metricLabels[w.metric]+' '+groupLabels[w.groupBy]+'</p><button class="delbtn" data-wid="'+w.id+'">verwijderen</button></div><div style="position:relative;height:200px"><canvas id="canvas_'+w.id+'"></canvas></div></div>'
+    '<div class="postcard"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><p style="font-weight:600;font-size:13px;margin:0">'+metricLabels[w.metric]+' '+groupLabels[w.groupBy]+(platformLabels[w.platformFilter]||'')+'</p><button class="delbtn" data-wid="'+w.id+'">verwijderen</button></div><div style="position:relative;height:220px"><canvas id="canvas_'+w.id+'"></canvas></div></div>'
   ).join('');
   const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
   const muted = isDark ? '#c3c2b7' : '#52514e';
   state.widgets.forEach(w=>{
-    const agg = widgetAggregate(w.metric, w.groupBy);
+    const agg = widgetAggregate(w.metric, w.groupBy, w.platformFilter);
     const canvas = document.getElementById('canvas_'+w.id);
     if(!canvas) return;
     if(w.chartType==='pie'){
       charts['widget_'+w.id] = new Chart(canvas, {type:'pie',
         data:{labels:agg.labels, datasets:[{data:agg.data, backgroundColor:agg.colors}]},
         options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{color:muted,font:{size:11}}}, tooltip:{callbacks:{label:ctx=>ctx.label+': '+fmtNum(ctx.parsed)}}}}});
+    } else if(w.chartType==='line'){
+      charts['widget_'+w.id] = new Chart(canvas, {type:'line',
+        data:{labels:agg.labels, datasets:[{data:agg.data, borderColor:'#2f5233', backgroundColor:'rgba(47,82,51,0.14)', borderWidth:2.5, pointRadius:4, fill:true, tension:0.25}]},
+        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtNum(ctx.parsed.y)}}}, scales:{x:{grid:{display:false},ticks:{color:muted,font:{size:10}}},y:{grid:{color:isDark?'#2c2c2a':'#e1e0d9'},ticks:{color:muted,callback:v=>fmtNum(v)},beginAtZero:true}}}});
     } else {
       charts['widget_'+w.id] = new Chart(canvas, {type:'bar',
         data:{labels:agg.labels, datasets:[{data:agg.data, backgroundColor:agg.colors, borderRadius:4}]},
-        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtNum(ctx.parsed.y)}}}, scales:{x:{grid:{display:false},ticks:{color:muted}},y:{grid:{color:isDark?'#2c2c2a':'#e1e0d9'},ticks:{color:muted,callback:v=>fmtNum(v)},beginAtZero:true}}}});
+        options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>fmtNum(ctx.parsed.y)}}}, scales:{x:{grid:{display:false},ticks:{color:muted,font:{size:10}}},y:{grid:{color:isDark?'#2c2c2a':'#e1e0d9'},ticks:{color:muted,callback:v=>fmtNum(v)},beginAtZero:true}}}});
     }
   });
   document.querySelectorAll('#widgetsGrid .delbtn').forEach(b=>b.addEventListener('click', ()=>{
@@ -633,7 +700,7 @@ function renderWidgets(){
   }));
 }
 document.getElementById('addWidgetBtn').addEventListener('click', ()=>{
-  state.widgets.push({id:'w'+Date.now(), metric:document.getElementById('wgMetric').value, groupBy:document.getElementById('wgGroup').value, chartType:document.getElementById('wgType').value});
+  state.widgets.push({id:'w'+Date.now(), metric:document.getElementById('wgMetric').value, groupBy:document.getElementById('wgGroup').value, chartType:document.getElementById('wgType').value, platformFilter:document.getElementById('wgPlatform').value});
   saveState(); renderWidgets();
 });
 
