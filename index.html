@@ -719,6 +719,7 @@ function fmtDuration(sec){
   if(m>0) return m+'m'+(s>0?' '+s+'s':'');
   return s+'s';
 }
+function cleanNumEN(v){ if(v===undefined||v===null) return 0; const n=parseFloat(String(v).replace(/,/g,'')); return isNaN(n)?0:n; }
 function cleanDate(v){ if(!v) return ''; const s=String(v).trim(); const m=s.match(/\d{4}-\d{2}-\d{2}/); if(m) return m[0]; const d=new Date(s); return isNaN(d)? '' : d.toISOString().slice(0,10); }
 
 document.getElementById('addFollowerBtn').addEventListener('click', ()=>{
@@ -876,6 +877,57 @@ function parseGenericPostSheet(rows, fullText){
   }
   return added;
 }
+function parsePdfByColumns(items, fullText){
+  const yearHint = extractYearHint(fullText);
+  let platform = 'Instagram';
+  if(/facebook/i.test(fullText) && !/instagram/i.test(fullText)) platform='Facebook';
+  const lineMap = {};
+  items.forEach(it=>{
+    const y = Math.round(it.y/3)*3;
+    if(!lineMap[y]) lineMap[y]=[];
+    lineMap[y].push(it);
+  });
+  const lines = Object.keys(lineMap).map(Number).map(y=>({y, items: lineMap[y].sort((a,b)=>a.x-b.x)}));
+  lines.sort((a,b)=>b.y-a.y);
+  let threshold = 480;
+  items.forEach(it=>{ if(String(it.text).trim().toUpperCase()==='COMMENTS') threshold = it.x - 20; });
+  const monthMap = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  const dateRe = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2}),?\s*(\d{1,2}):(\d{2})/;
+  const dateLines = [], metricLines = [];
+  lines.forEach(line=>{
+    const text = line.items.map(it=>it.text).join(' ');
+    const dm = text.match(dateRe);
+    if(dm) dateLines.push({y:line.y, m:dm});
+    const rightItems = line.items.filter(it=>it.x>=threshold).map(it=>String(it.text).trim()).filter(Boolean);
+    if(rightItems.length>=8){
+      const numericLike = rightItems.filter(t=>/^-?\d[\d,]*$/.test(t) || /^(\d+d)?(\d+h)?(\d+m)?(\d+s)$/.test(t)).length;
+      if(numericLike>=7) metricLines.push({y:line.y, tokens:rightItems.slice(0,9)});
+    }
+  });
+  let added=0;
+  dateLines.forEach(dl=>{
+    let best=null, bestDist=Infinity;
+    metricLines.forEach(ml=>{ const dist=Math.abs(ml.y-dl.y); if(dist<bestDist){ bestDist=dist; best=ml; } });
+    if(!best || bestDist>25 || best.tokens.length<9) return;
+    const [comments,engagement,follows,likes,reach,watchStr,saves,shares,views] = best.tokens;
+    const monIdx = monthMap[dl.m[1].toLowerCase()]; if(monIdx===undefined) return;
+    const dateObj = new Date(Date.UTC(yearHint, monIdx, parseInt(dl.m[2],10)));
+    const captionParts = [];
+    lines.forEach(line=>{
+      if(line.y>=Math.min(dl.y,best.y)-30 && line.y<=Math.max(dl.y,best.y)+6){
+        const left = line.items.filter(it=>it.x<threshold).map(it=>it.text).join(' ').trim();
+        if(left && !dateRe.test(left) && left.length>2 && !/^h$/i.test(left) && left.toLowerCase().indexOf('zeewolde')===-1) captionParts.push(left);
+      }
+    });
+    const caption = captionParts.join(' ').replace(/\s+/g,' ').trim().slice(0,60);
+    state.posts.push({id:'p'+Date.now()+Math.random(), platform, date:dateObj.toISOString().slice(0,10), text:caption||'(geen titel)',
+      comments:cleanNumEN(comments), engagement:cleanNumEN(engagement), likes:cleanNumEN(likes), reach:cleanNumEN(reach),
+      saves:cleanNumEN(saves), shares:cleanNumEN(shares), views:cleanNumEN(views), watchDuration:parseDuration(watchStr)});
+    added++;
+  });
+  return added;
+}
+
 function parsePdfTextStream(fullText){
   const monthMap = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
   const yearHint = extractYearHint(fullText);
@@ -901,8 +953,8 @@ function parsePdfTextStream(fullText){
     let comments,engagement,follows,likes,reach,watchStr,saves,shares,views;
     if(rw && rw[6].trim()!==''){
       [,comments,engagement,follows,likes,reach,watchStr,saves,shares,views] = rw.map(v=>v);
-      comments=cleanNum(comments); engagement=cleanNum(engagement); likes=cleanNum(likes); reach=cleanNum(reach);
-      saves=cleanNum(saves); shares=cleanNum(shares); views=cleanNum(views);
+      comments=cleanNumEN(comments); engagement=cleanNumEN(engagement); likes=cleanNumEN(likes); reach=cleanNumEN(reach);
+      saves=cleanNumEN(saves); shares=cleanNumEN(shares); views=cleanNumEN(views);
     } else {
       const nums = (chunk.match(/-?\d[\d,]*/g) || []).map(n=>parseFloat(n.replace(/,/g,'')));
       if(nums.length < 8) continue;
@@ -973,11 +1025,13 @@ document.getElementById('pdfUpload').addEventListener('change', async (e)=>{
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data:buf}).promise;
     const rows = [];
+    const allItems = [];
     let rawText = '';
     for(let p=1; p<=pdf.numPages; p++){
       const page = await pdf.getPage(p);
       const content = await page.getTextContent();
       rawText += content.items.map(it=>it.str + (it.hasEOL ? '\n' : ' ')).join('') + '\n';
+      content.items.forEach(item=>{ if(item.str && item.str.trim()) allItems.push({x:item.transform[4], y:item.transform[5], text:item.str}); });
       const lineMap = {};
       content.items.forEach(item=>{
         const y = Math.round(item.transform[5]/3)*3;
@@ -990,9 +1044,20 @@ document.getElementById('pdfUpload').addEventListener('change', async (e)=>{
       });
     }
     const rowsArr = rows.map(r=>r.split('\t'));
-    let added = parseFacebookSheet(rowsArr) + parseInstagramSheet(rowsArr);
-    if(added===0) added = parseGenericPostSheet(rowsArr, rows.join('\n')+'\n'+rawText);
-    if(added===0) added = parsePdfTextStream(rawText);
+    function tryParser(fn, ...args){
+      const before = state.posts.length;
+      const n = fn(...args);
+      if(n>0){
+        const newOnes = state.posts.slice(before);
+        const hasRealData = newOnes.some(p=>(p.engagement||0)>0 || (p.views||0)>0 || (p.reach||0)>0 || (p.likes||0)>0);
+        if(!hasRealData){ state.posts.length = before; return 0; }
+      }
+      return n;
+    }
+    let added = tryParser(parsePdfByColumns, allItems, rawText);
+    if(added===0) added = tryParser(parsePdfTextStream, rawText);
+    if(added===0) added = tryParser(parseFacebookSheet, rowsArr) + tryParser(parseInstagramSheet, rowsArr);
+    if(added===0) added = tryParser(parseGenericPostSheet, rowsArr, rows.join('\n')+'\n'+rawText);
     if(added>0){ document.getElementById('pdfStatus').textContent = added+' posts toegevoegd uit '+file.name+'.'; saveState(); renderAll(); }
     else { document.getElementById('pdfStatus').textContent = 'Geen posts herkend in dit PDF-bestand. Controleer of het een post-overzicht met datums en cijfers bevat, of probeer de Excel-export.'; }
   }catch(err){
@@ -1000,6 +1065,7 @@ document.getElementById('pdfUpload').addEventListener('change', async (e)=>{
   }
   e.target.value='';
 });
+
 
 function widgetAggregate(metric, groupBy, platformFilter){
   let posts = state.posts;
