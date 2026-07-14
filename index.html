@@ -228,7 +228,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <option value="comments">Reacties</option>
 <option value="shares">Doorgestuurd</option>
 <option value="saves">Saves</option>
-<option value="watchDuration">Kijktijd (sec)</option>
+<option value="watchDuration">Kijktijd</option>
 <option value="engagement">Engagement</option>
 </select>
 </div>
@@ -332,7 +332,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <option value="comments">Reacties</option>
 <option value="shares">Doorgestuurd</option>
 <option value="saves">Saves</option>
-<option value="watchDuration">Kijktijd (sec)</option>
+<option value="watchDuration">Kijktijd</option>
 <option value="engagement">Engagement</option>
 </select>
 <select id="wgPlatform">
@@ -623,7 +623,7 @@ function renderPostsTab(){
   const cardHtml=(title,list)=> '<div class="postcard"><p style="font-weight:600;font-size:13px;margin:0 0 8px">'+title+'</p>'+ (list.length? list.map(p=>'<div class="postrow post-clickable" data-id="'+p.id+'" style="cursor:pointer"><span>'+p.date+' - '+p.platform+' - '+p.text.slice(0,28)+'</span><span style="font-weight:600">'+fmtNum(p[metric])+'</span></div>').join('') : '<p class="hint">Geen data</p>') + '</div>';
   document.getElementById('topWorstRow').innerHTML = cardHtml('Top 3 best presterend', best) + cardHtml('Top 3 slechtst presterend', worst);
   let html='<tr><th>Datum</th><th>Platform</th><th>Type</th><th>Post</th><th>Weergaven</th><th>Bereik</th><th>Likes</th><th>Reacties</th><th>Doorgestuurd</th><th>Saves</th><th>Kijktijd</th><th>Engagement</th></tr>';
-  sorted.forEach(p=>{ const t=postType(p); html+='<tr class="post-clickable" data-id="'+p.id+'" style="cursor:pointer"><td>'+p.date+'</td><td>'+p.platform+'</td><td>'+(t==='Reel'?'🎬 Reel':'Post')+'</td><td>'+p.text.slice(0,30)+'</td><td>'+fmtNum(p.views)+'</td><td>'+fmtNum(p.reach)+'</td><td>'+fmtNum(p.likes)+'</td><td>'+fmtNum(p.comments)+'</td><td>'+fmtNum(p.shares)+'</td><td>'+fmtNum(p.saves)+'</td><td>'+(p.watchDuration?p.watchDuration+'s':'-')+'</td><td>'+fmtNum(p.engagement)+'</td></tr>'; });
+  sorted.forEach(p=>{ const t=postType(p); html+='<tr class="post-clickable" data-id="'+p.id+'" style="cursor:pointer"><td>'+p.date+'</td><td>'+p.platform+'</td><td>'+(t==='Reel'?'🎬 Reel':'Post')+'</td><td>'+p.text.slice(0,30)+'</td><td>'+fmtNum(p.views)+'</td><td>'+fmtNum(p.reach)+'</td><td>'+fmtNum(p.likes)+'</td><td>'+fmtNum(p.comments)+'</td><td>'+fmtNum(p.shares)+'</td><td>'+fmtNum(p.saves)+'</td><td>'+fmtDuration(p.watchDuration)+'</td><td>'+fmtNum(p.engagement)+'</td></tr>'; });
   document.getElementById('postsTable').innerHTML=html;
   document.querySelectorAll('.post-clickable').forEach(el=>el.addEventListener('click', ()=>openPostDetail(el.dataset.id)));
   renderPostsTimeline(posts);
@@ -674,8 +674,8 @@ function openPostDetail(id){
   document.getElementById('pmPlatform').textContent = p.platform+' · '+(postType(p)==='Reel'?'🎬 Reel':'Post');
   document.getElementById('pmDate').textContent = p.date;
   document.getElementById('pmText').textContent = p.text;
-  const stats = [['Weergaven',p.views],['Bereik',p.reach],['Likes',p.likes],['Reacties',p.comments],['Doorgestuurd',p.shares],['Saves',p.saves],['Kijktijd (sec)',p.watchDuration||0],['Engagement',p.engagement]];
-  document.getElementById('pmStats').innerHTML = stats.map(s=>'<div class="mc" style="padding:10px 12px"><p style="margin:0 0 2px;font-size:11px">'+s[0]+'</p><p style="margin:0;font-size:17px">'+fmtNum(s[1])+'</p></div>').join('');
+  const stats = [['Weergaven',fmtNum(p.views)],['Bereik',fmtNum(p.reach)],['Likes',fmtNum(p.likes)],['Reacties',fmtNum(p.comments)],['Doorgestuurd',fmtNum(p.shares)],['Saves',fmtNum(p.saves)],['Kijktijd',fmtDuration(p.watchDuration)],['Engagement',fmtNum(p.engagement)]];
+  document.getElementById('pmStats').innerHTML = stats.map(s=>'<div class="mc" style="padding:10px 12px"><p style="margin:0 0 2px;font-size:11px">'+s[0]+'</p><p style="margin:0;font-size:17px">'+s[1]+'</p></div>').join('');
   document.getElementById('postModalOverlay').style.display='flex';
 }
 document.getElementById('pmClose').addEventListener('click', ()=>{ document.getElementById('postModalOverlay').style.display='none'; });
@@ -699,6 +699,26 @@ function renderManageList(){
 
 function splitLine(l){ return l.includes('\t') ? l.split('\t') : l.split(/\s{2,}/); }
 function cleanNum(v){ if(v===undefined) return 0; const n=parseFloat(String(v).replace(/\./g,'').replace(',','.')); return isNaN(n)?0:n; }
+function parseDuration(str){
+  str = String(str||'').trim();
+  if(!str) return 0;
+  if(/^\d+([.,]\d+)?$/.test(str)) return cleanNum(str);
+  let total = 0;
+  const d = str.match(/(\d+)\s*d/i); if(d) total += parseInt(d[1],10)*86400;
+  const h = str.match(/(\d+)\s*h/i); if(h) total += parseInt(h[1],10)*3600;
+  const m = str.match(/(\d+)\s*m(?!s)/i); if(m) total += parseInt(m[1],10)*60;
+  const s = str.match(/(\d+)\s*s/i); if(s) total += parseInt(s[1],10);
+  return total;
+}
+function fmtDuration(sec){
+  sec = Math.round(sec||0);
+  if(sec<=0) return '0s';
+  const d = Math.floor(sec/86400), h = Math.floor((sec%86400)/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+  if(d>0) return d+'d'+(h>0?' '+h+'h':'');
+  if(h>0) return h+'h'+(m>0?' '+m+'m':'');
+  if(m>0) return m+'m'+(s>0?' '+s+'s':'');
+  return s+'s';
+}
 function cleanDate(v){ if(!v) return ''; const s=String(v).trim(); const m=s.match(/\d{4}-\d{2}-\d{2}/); if(m) return m[0]; const d=new Date(s); return isNaN(d)? '' : d.toISOString().slice(0,10); }
 
 document.getElementById('addFollowerBtn').addEventListener('click', ()=>{
@@ -782,7 +802,7 @@ function parseInstagramSheet(rows){
     const date = cleanDate(r[idx.datum]); if(!date) continue;
     state.posts.push({id:'p'+Date.now()+Math.random(), platform:'Instagram', date, text:String(r[idx.post]||'').slice(0,60),
       comments:cleanNum(r[idx.comments]), engagement:cleanNum(r[idx.eng]), likes:cleanNum(r[idx.likes]), reach:cleanNum(r[idx.reach]), shares:cleanNum(r[idx.shares]), views:cleanNum(r[idx.views]), saves:cleanNum(r[idx.saves]),
-      watchDuration: idx.watch>-1 ? cleanNum(r[idx.watch]) : 0});
+      watchDuration: idx.watch>-1 ? parseDuration(r[idx.watch]) : 0});
     added++;
   }
   return added;
@@ -851,7 +871,7 @@ function parseGenericPostSheet(rows, fullText){
     state.posts.push({id:'p'+Date.now()+Math.random(), platform, date, text:String(r[idx.post]||'').slice(0,60),
       comments:cleanNum(r[idx.comments]), engagement:cleanNum(r[idx.eng]), likes:cleanNum(r[idx.likes]),
       reach:cleanNum(r[idx.reach]), shares:cleanNum(r[idx.shares]), views:cleanNum(r[idx.views]), saves:cleanNum(r[idx.saves]),
-      watchDuration: idx.watch>-1?cleanNum(r[idx.watch]):0});
+      watchDuration: idx.watch>-1?parseDuration(r[idx.watch]):0});
     added++;
   }
   return added;
@@ -863,6 +883,9 @@ function parsePdfTextStream(fullText){
   if(/facebook/i.test(fullText) && !/instagram/i.test(fullText)) platform='Facebook';
   const dateRe = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2}),\s*(\d{1,2}):(\d{2})/g;
   const matches = [...fullText.matchAll(dateRe)];
+  const numTok = '(\\d[\\d,]*)';
+  const durTok = '((?:\\d+\\s*d\\s*)?(?:\\d+\\s*h\\s*)?(?:\\d+\\s*m\\s*)?(?:\\d+\\s*s)?)';
+  const rowWithWatch = new RegExp(numTok+'\\s+'+numTok+'\\s+'+numTok+'\\s+'+numTok+'\\s+'+numTok+'\\s+'+durTok+'\\s+'+numTok+'\\s+'+numTok+'\\s+'+numTok);
   let added=0;
   for(let i=0;i<matches.length;i++){
     const m = matches[i];
@@ -874,12 +897,21 @@ function parsePdfTextStream(fullText){
     const chunk = fullText.slice(chunkStart, chunkEnd);
     const capMatch = chunk.match(/^(.*?)(?=\s+-?\d[\d,]*\b)/s);
     const caption = (capMatch ? capMatch[1] : chunk).replace(/\s+/g,' ').trim().slice(0,60);
-    const nums = (chunk.match(/-?\d[\d,]*/g) || []).map(n=>parseFloat(n.replace(/,/g,'')));
-    if(nums.length < 8) continue;
-    const last8 = nums.slice(-8);
-    const [comments, engagement, follows, likes, reach, saves, shares, views] = last8;
+    const rw = chunk.match(rowWithWatch);
+    let comments,engagement,follows,likes,reach,watchStr,saves,shares,views;
+    if(rw && rw[6].trim()!==''){
+      [,comments,engagement,follows,likes,reach,watchStr,saves,shares,views] = rw.map(v=>v);
+      comments=cleanNum(comments); engagement=cleanNum(engagement); likes=cleanNum(likes); reach=cleanNum(reach);
+      saves=cleanNum(saves); shares=cleanNum(shares); views=cleanNum(views);
+    } else {
+      const nums = (chunk.match(/-?\d[\d,]*/g) || []).map(n=>parseFloat(n.replace(/,/g,'')));
+      if(nums.length < 8) continue;
+      const last8 = nums.slice(-8);
+      [comments, engagement, follows, likes, reach, saves, shares, views] = last8;
+      watchStr = '0s';
+    }
     state.posts.push({id:'p'+Date.now()+Math.random(), platform, date:dateStr, text:caption||'(geen titel)',
-      comments:comments||0, engagement:engagement||0, likes:likes||0, reach:reach||0, saves:saves||0, shares:shares||0, views:views||0, watchDuration:0});
+      comments:comments||0, engagement:engagement||0, likes:likes||0, reach:reach||0, saves:saves||0, shares:shares||0, views:views||0, watchDuration:parseDuration(watchStr)});
     added++;
   }
   return added;
@@ -987,7 +1019,7 @@ function widgetAggregate(metric, groupBy, platformFilter){
     return {labels:sorted.map(p=>p.date+' '+p.text.slice(0,16)), data:sorted.map(p=>p[metric]), colors:sorted.map(p=>p.platform==='Facebook'?'#2f5233':'#c0392b')};
   }
 }
-const metricLabels = {likes:'Likes', comments:'Reacties', shares:'Doorgestuurd', reach:'Bereik', views:'Weergaven', saves:'Saves', watchDuration:'Kijktijd (sec)', engagement:'Engagement'};
+const metricLabels = {likes:'Likes', comments:'Reacties', shares:'Doorgestuurd', reach:'Bereik', views:'Weergaven', saves:'Saves', watchDuration:'Kijktijd', engagement:'Engagement'};
 const groupLabels = {platform:'per platform', month:'per maand', week:'per week', post:'per post (top 10)'};
 const platformLabels = {all:'', Facebook:' - alleen Facebook', Instagram:' - alleen Instagram'};
 
