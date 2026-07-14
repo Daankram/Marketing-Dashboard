@@ -216,6 +216,11 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <option value="Facebook">Facebook</option>
 <option value="Instagram">Instagram</option>
 </select>
+<select id="postsTypeFilter">
+<option value="all">Reels en Posts</option>
+<option value="Reel">Alleen Reels</option>
+<option value="Post">Alleen Posts</option>
+</select>
 <select id="postsMetric">
 <option value="views">Weergaven</option>
 <option value="reach">Bereik</option>
@@ -223,12 +228,17 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <option value="comments">Reacties</option>
 <option value="shares">Doorgestuurd</option>
 <option value="saves">Saves</option>
+<option value="watchDuration">Kijktijd (sec)</option>
 <option value="engagement">Engagement</option>
 </select>
 </div>
 <div class="grid2" id="topWorstRow" style="margin-bottom:20px"></div>
 <p class="hint">Klik op een post voor alle details.</p>
 <div style="overflow-x:auto"><table id="postsTable"></table></div>
+
+<p class="section-title" style="margin-top:24px">Weergaven per post, in tijdlijn</p>
+<p class="hint">Elke post op zijn plek in de tijd; hoe verder naar rechts, hoe meer kijkers. Klik op een bolletje voor de post.</p>
+<div class="chart-wrap" id="timelineWrap" style="height:420px"><canvas id="postsTimelineChart"></canvas></div>
 </div>
 
 <div id="postModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9998;align-items:center;justify-content:center;padding:20px">
@@ -322,6 +332,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <option value="comments">Reacties</option>
 <option value="shares">Doorgestuurd</option>
 <option value="saves">Saves</option>
+<option value="watchDuration">Kijktijd (sec)</option>
 <option value="engagement">Engagement</option>
 </select>
 <select id="wgPlatform">
@@ -361,22 +372,22 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 const STORAGE_KEY = 'hg-marketing-dashboard';
 
 const seedPosts = [
-{id:'fb1',platform:'Facebook',date:'2026-06-02',text:'Pannenkoekenpitstop! zomerbrandstof',likes:24,comments:1,shares:0,reach:0,views:10613,saves:0,engagement:161},
-{id:'fb2',platform:'Facebook',date:'2026-06-06',text:'Jaar lang gratis pannenkoeken actie',likes:21,comments:8,shares:3,reach:0,views:7773,saves:0,engagement:11},
-{id:'fb3',platform:'Facebook',date:'2026-06-08',text:'Wegwerkzaamheden waarschuwing',likes:2,comments:0,shares:0,reach:0,views:1866,saves:0,engagement:0},
-{id:'fb4',platform:'Facebook',date:'2026-06-09',text:'Avond4Daagse solarheks',likes:4,comments:1,shares:1,reach:0,views:1588,saves:0,engagement:2},
-{id:'fb5',platform:'Facebook',date:'2026-06-14',text:'WK 2026 Oranje boven',likes:20,comments:1,shares:1,reach:0,views:6732,saves:0,engagement:78},
-{id:'fb6',platform:'Facebook',date:'2026-06-16',text:'Vis uit de Tovervijver',likes:12,comments:0,shares:0,reach:0,views:1875,saves:0,engagement:0},
-{id:'fb7',platform:'Facebook',date:'2026-06-24',text:'Playdate Sybren en Louise',likes:13,comments:5,shares:2,reach:0,views:2948,saves:0,engagement:7},
-{id:'ig1',platform:'Instagram',date:'2026-06-02',text:'Pannenkoekenpitstop zomerbrandstof',likes:110,comments:1,shares:3,reach:7972,views:13675,saves:2,engagement:116},
-{id:'ig2',platform:'Instagram',date:'2026-06-06',text:'Jaar lang gratis pannenkoeken actie',likes:90,comments:2,shares:78,reach:8257,views:10807,saves:5,engagement:179},
-{id:'ig3',platform:'Instagram',date:'2026-06-08',text:'Wegwerkzaamheden waarschuwing',likes:17,comments:0,shares:1,reach:4090,views:5920,saves:1,engagement:20},
-{id:'ig4',platform:'Instagram',date:'2026-06-09',text:'Avond4Daagse',likes:34,comments:2,shares:5,reach:3455,views:4527,saves:1,engagement:42},
-{id:'ig5',platform:'Instagram',date:'2026-06-14',text:'WK 2026 Oranje boven',likes:82,comments:0,shares:2,reach:4532,views:7668,saves:2,engagement:87},
-{id:'ig6',platform:'Instagram',date:'2026-06-16',text:'Vis uit de Tovervijver',likes:148,comments:3,shares:15,reach:9253,views:12723,saves:1,engagement:168},
-{id:'ig7',platform:'Instagram',date:'2026-06-20',text:'Heks is spoorloos zoektocht',likes:57,comments:3,shares:1,reach:3815,views:10172,saves:3,engagement:64},
-{id:'ig8',platform:'Instagram',date:'2026-06-24',text:'Playdate Sybren en Louise',likes:61,comments:6,shares:3,reach:4198,views:5299,saves:4,engagement:77},
-{id:'ig9',platform:'Instagram',date:'2026-06-27',text:'Pannenkoek nacho of slagroom',likes:63,comments:0,shares:7,reach:3618,views:9139,saves:2,engagement:73}
+{id:'fb1',platform:'Facebook',date:'2026-06-02',text:'Pannenkoekenpitstop! zomerbrandstof',likes:24,comments:1,shares:0,reach:0,views:10613,saves:0,engagement:161,watchDuration:0},
+{id:'fb2',platform:'Facebook',date:'2026-06-06',text:'Jaar lang gratis pannenkoeken actie',likes:21,comments:8,shares:3,reach:0,views:7773,saves:0,engagement:11,watchDuration:0},
+{id:'fb3',platform:'Facebook',date:'2026-06-08',text:'Wegwerkzaamheden waarschuwing',likes:2,comments:0,shares:0,reach:0,views:1866,saves:0,engagement:0,watchDuration:0},
+{id:'fb4',platform:'Facebook',date:'2026-06-09',text:'Avond4Daagse solarheks',likes:4,comments:1,shares:1,reach:0,views:1588,saves:0,engagement:2,watchDuration:0},
+{id:'fb5',platform:'Facebook',date:'2026-06-14',text:'WK 2026 Oranje boven',likes:20,comments:1,shares:1,reach:0,views:6732,saves:0,engagement:78,watchDuration:0},
+{id:'fb6',platform:'Facebook',date:'2026-06-16',text:'Vis uit de Tovervijver',likes:12,comments:0,shares:0,reach:0,views:1875,saves:0,engagement:0,watchDuration:0},
+{id:'fb7',platform:'Facebook',date:'2026-06-24',text:'Playdate Sybren en Louise',likes:13,comments:5,shares:2,reach:0,views:2948,saves:0,engagement:7,watchDuration:0},
+{id:'ig1',platform:'Instagram',date:'2026-06-02',text:'Pannenkoekenpitstop zomerbrandstof',likes:110,comments:1,shares:3,reach:7972,views:13675,saves:2,engagement:116,watchDuration:0},
+{id:'ig2',platform:'Instagram',date:'2026-06-06',text:'Jaar lang gratis pannenkoeken actie',likes:90,comments:2,shares:78,reach:8257,views:10807,saves:5,engagement:179,watchDuration:0},
+{id:'ig3',platform:'Instagram',date:'2026-06-08',text:'Wegwerkzaamheden waarschuwing',likes:17,comments:0,shares:1,reach:4090,views:5920,saves:1,engagement:20,watchDuration:0},
+{id:'ig4',platform:'Instagram',date:'2026-06-09',text:'Avond4Daagse',likes:34,comments:2,shares:5,reach:3455,views:4527,saves:1,engagement:42,watchDuration:8.4},
+{id:'ig5',platform:'Instagram',date:'2026-06-14',text:'WK 2026 Oranje boven',likes:82,comments:0,shares:2,reach:4532,views:7668,saves:2,engagement:87,watchDuration:0},
+{id:'ig6',platform:'Instagram',date:'2026-06-16',text:'Vis uit de Tovervijver',likes:148,comments:3,shares:15,reach:9253,views:12723,saves:1,engagement:168,watchDuration:12.1},
+{id:'ig7',platform:'Instagram',date:'2026-06-20',text:'Heks is spoorloos zoektocht',likes:57,comments:3,shares:1,reach:3815,views:10172,saves:3,engagement:64,watchDuration:0},
+{id:'ig8',platform:'Instagram',date:'2026-06-24',text:'Playdate Sybren en Louise',likes:61,comments:6,shares:3,reach:4198,views:5299,saves:4,engagement:77,watchDuration:0},
+{id:'ig9',platform:'Instagram',date:'2026-06-27',text:'Pannenkoek nacho of slagroom',likes:63,comments:0,shares:7,reach:3618,views:9139,saves:2,engagement:73,watchDuration:6.7}
 ];
 const seedFollowers = [{id:'f2026-06',month:'2026-06',fbTotal:0,fbNew:0,igTotal:0,igNew:0,targetPct:0}];
 
@@ -604,26 +615,66 @@ document.getElementById('cmpViewBtns').addEventListener('click', e=>{
 
 function renderPostsTab(){
   const plat = document.getElementById('postsPlatformFilter').value;
+  const typeFilter = document.getElementById('postsTypeFilter').value;
   const metric = document.getElementById('postsMetric').value;
-  let posts = state.posts.filter(p=> plat==='all' || p.platform===plat);
+  let posts = state.posts.filter(p=> (plat==='all' || p.platform===plat) && (typeFilter==='all' || postType(p)===typeFilter) );
   const sorted = [...posts].sort((a,b)=>b[metric]-a[metric]);
   const best = sorted.slice(0,3), worst = sorted.slice(-3).reverse();
   const cardHtml=(title,list)=> '<div class="postcard"><p style="font-weight:600;font-size:13px;margin:0 0 8px">'+title+'</p>'+ (list.length? list.map(p=>'<div class="postrow post-clickable" data-id="'+p.id+'" style="cursor:pointer"><span>'+p.date+' - '+p.platform+' - '+p.text.slice(0,28)+'</span><span style="font-weight:600">'+fmtNum(p[metric])+'</span></div>').join('') : '<p class="hint">Geen data</p>') + '</div>';
   document.getElementById('topWorstRow').innerHTML = cardHtml('Top 3 best presterend', best) + cardHtml('Top 3 slechtst presterend', worst);
-  let html='<tr><th>Datum</th><th>Platform</th><th>Post</th><th>Weergaven</th><th>Bereik</th><th>Likes</th><th>Reacties</th><th>Doorgestuurd</th><th>Saves</th><th>Engagement</th></tr>';
-  sorted.forEach(p=>{ html+='<tr class="post-clickable" data-id="'+p.id+'" style="cursor:pointer"><td>'+p.date+'</td><td>'+p.platform+'</td><td>'+p.text.slice(0,30)+'</td><td>'+fmtNum(p.views)+'</td><td>'+fmtNum(p.reach)+'</td><td>'+fmtNum(p.likes)+'</td><td>'+fmtNum(p.comments)+'</td><td>'+fmtNum(p.shares)+'</td><td>'+fmtNum(p.saves)+'</td><td>'+fmtNum(p.engagement)+'</td></tr>'; });
+  let html='<tr><th>Datum</th><th>Platform</th><th>Type</th><th>Post</th><th>Weergaven</th><th>Bereik</th><th>Likes</th><th>Reacties</th><th>Doorgestuurd</th><th>Saves</th><th>Kijktijd</th><th>Engagement</th></tr>';
+  sorted.forEach(p=>{ const t=postType(p); html+='<tr class="post-clickable" data-id="'+p.id+'" style="cursor:pointer"><td>'+p.date+'</td><td>'+p.platform+'</td><td>'+(t==='Reel'?'🎬 Reel':'Post')+'</td><td>'+p.text.slice(0,30)+'</td><td>'+fmtNum(p.views)+'</td><td>'+fmtNum(p.reach)+'</td><td>'+fmtNum(p.likes)+'</td><td>'+fmtNum(p.comments)+'</td><td>'+fmtNum(p.shares)+'</td><td>'+fmtNum(p.saves)+'</td><td>'+(p.watchDuration?p.watchDuration+'s':'-')+'</td><td>'+fmtNum(p.engagement)+'</td></tr>'; });
   document.getElementById('postsTable').innerHTML=html;
   document.querySelectorAll('.post-clickable').forEach(el=>el.addEventListener('click', ()=>openPostDetail(el.dataset.id)));
+  renderPostsTimeline(posts);
 }
 document.getElementById('postsPlatformFilter').addEventListener('change', renderPostsTab);
+document.getElementById('postsTypeFilter').addEventListener('change', renderPostsTab);
 document.getElementById('postsMetric').addEventListener('change', renderPostsTab);
+
+function renderPostsTimeline(posts){
+  const sorted = [...posts].sort((a,b)=>a.date.localeCompare(b.date));
+  if(charts.timeline) charts.timeline.destroy();
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const muted = isDark ? '#c3c2b7' : '#52514e';
+  const grid = isDark ? '#2c2c2a' : '#e1e0d9';
+  const wrap = document.getElementById('timelineWrap');
+  if(sorted.length===0){
+    wrap.style.height = '80px';
+    wrap.innerHTML = '<p class="hint">Geen posts binnen deze filters.</p><canvas id="postsTimelineChart"></canvas>';
+    return;
+  }
+  wrap.style.height = Math.max(280, sorted.length*34)+'px';
+  wrap.innerHTML = '<canvas id="postsTimelineChart"></canvas>';
+  charts.timeline = new Chart(document.getElementById('postsTimelineChart'), {
+    type:'line',
+    data:{labels:sorted.map(p=>p.date+' · '+p.platform+(postType(p)==='Reel'?' 🎬':'')), datasets:[{
+      data:sorted.map(p=>p.views), borderColor:'#7a4fa0', backgroundColor:'rgba(122,79,160,0.10)',
+      borderWidth:2, pointRadius:6, pointHoverRadius:9,
+      pointBackgroundColor:sorted.map(p=>p.platform==='Facebook'?'#2f5233':'#c0392b'),
+      pointBorderColor:'#fff', pointBorderWidth:1.5, fill:false, tension:0.1
+    }]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{
+          title:(items)=>{ const p = sorted[items[0].dataIndex]; return p ? p.text.slice(0,40) : ''; },
+          label:(ctx)=> 'Weergaven: '+fmtNum(ctx.parsed.x)
+        }}},
+      scales:{x:{grid:{color:grid},ticks:{color:muted,callback:v=>fmtNum(v)},beginAtZero:true,title:{display:true,text:'Aantal kijkers / weergaven',color:muted}},
+        y:{grid:{display:false},ticks:{color:muted,font:{size:10}}}},
+      onClick:(evt, elements)=>{ if(elements.length){ const post = sorted[elements[0].index]; if(post) openPostDetail(post.id); } },
+      onHover:(evt, elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
+    }
+  });
+}
 
 function openPostDetail(id){
   const p = state.posts.find(x=>x.id===id); if(!p) return;
-  document.getElementById('pmPlatform').textContent = p.platform;
+  document.getElementById('pmPlatform').textContent = p.platform+' · '+(postType(p)==='Reel'?'🎬 Reel':'Post');
   document.getElementById('pmDate').textContent = p.date;
   document.getElementById('pmText').textContent = p.text;
-  const stats = [['Weergaven',p.views],['Bereik',p.reach],['Likes',p.likes],['Reacties',p.comments],['Doorgestuurd',p.shares],['Saves',p.saves],['Engagement',p.engagement]];
+  const stats = [['Weergaven',p.views],['Bereik',p.reach],['Likes',p.likes],['Reacties',p.comments],['Doorgestuurd',p.shares],['Saves',p.saves],['Kijktijd (sec)',p.watchDuration||0],['Engagement',p.engagement]];
   document.getElementById('pmStats').innerHTML = stats.map(s=>'<div class="mc" style="padding:10px 12px"><p style="margin:0 0 2px;font-size:11px">'+s[0]+'</p><p style="margin:0;font-size:17px">'+fmtNum(s[1])+'</p></div>').join('');
   document.getElementById('postModalOverlay').style.display='flex';
 }
@@ -696,6 +747,7 @@ function findHeaderRow(rows, marker){
   return -1;
 }
 function colIndex(headerRow, name){ return headerRow.findIndex(h=>String(h||'').trim().toLowerCase()===name.toLowerCase()); }
+function colIndexContains(headerRow, part){ return headerRow.findIndex(h=>String(h||'').trim().toLowerCase().includes(part.toLowerCase())); }
 
 function parseFacebookSheet(rows){
   const hIdx = findHeaderRow(rows, 'Datum');
@@ -710,7 +762,7 @@ function parseFacebookSheet(rows){
     const r = rows[i]; if(!r || r[idx.datum]===undefined || r[idx.datum]===null || r[idx.datum]==='') break;
     const date = cleanDate(r[idx.datum]); if(!date) continue;
     state.posts.push({id:'p'+Date.now()+Math.random(), platform:'Facebook', date, text:String(r[idx.tekst]||'').slice(0,60),
-      comments:cleanNum(r[idx.opm]), engagement:cleanNum(r[idx.eng]), likes:cleanNum(r[idx.likes]), shares:cleanNum(r[idx.delen]), views:cleanNum(r[idx.weerg]), reach:0, saves:0});
+      comments:cleanNum(r[idx.opm]), engagement:cleanNum(r[idx.eng]), likes:cleanNum(r[idx.likes]), shares:cleanNum(r[idx.delen]), views:cleanNum(r[idx.weerg]), reach:0, saves:0, watchDuration:0});
     added++;
   }
   return added;
@@ -721,18 +773,21 @@ function parseInstagramSheet(rows){
   const header = rows[hIdx];
   const idx = {
     datum: colIndex(header,'Datum/tijd'), post: colIndex(header,'Post'), comments: colIndex(header,'Comments'),
-    eng: colIndex(header,'Engagement'), likes: colIndex(header,'Likes'), reach: colIndex(header,'Reach'), shares: colIndex(header,'Shares'), views: colIndex(header,'Views'), saves: colIndex(header,'Saves')
+    eng: colIndex(header,'Engagement'), likes: colIndex(header,'Likes'), reach: colIndex(header,'Reach'), shares: colIndex(header,'Shares'), views: colIndex(header,'Views'), saves: colIndex(header,'Saves'),
+    watch: colIndexContains(header,'watch')
   };
   let added=0;
   for(let i=hIdx+1;i<rows.length;i++){
     const r = rows[i]; if(!r || r[idx.datum]===undefined || r[idx.datum]===null || r[idx.datum]==='') break;
     const date = cleanDate(r[idx.datum]); if(!date) continue;
     state.posts.push({id:'p'+Date.now()+Math.random(), platform:'Instagram', date, text:String(r[idx.post]||'').slice(0,60),
-      comments:cleanNum(r[idx.comments]), engagement:cleanNum(r[idx.eng]), likes:cleanNum(r[idx.likes]), reach:cleanNum(r[idx.reach]), shares:cleanNum(r[idx.shares]), views:cleanNum(r[idx.views]), saves:cleanNum(r[idx.saves])});
+      comments:cleanNum(r[idx.comments]), engagement:cleanNum(r[idx.eng]), likes:cleanNum(r[idx.likes]), reach:cleanNum(r[idx.reach]), shares:cleanNum(r[idx.shares]), views:cleanNum(r[idx.views]), saves:cleanNum(r[idx.saves]),
+      watchDuration: idx.watch>-1 ? cleanNum(r[idx.watch]) : 0});
     added++;
   }
   return added;
 }
+function postType(p){ return (p.watchDuration||0) > 0 ? 'Reel' : 'Post'; }
 
 document.getElementById('xlsxUpload').addEventListener('change', (e)=>{
   const file = e.target.files[0]; if(!file) return;
@@ -829,7 +884,7 @@ function widgetAggregate(metric, groupBy, platformFilter){
     return {labels:sorted.map(p=>p.date+' '+p.text.slice(0,16)), data:sorted.map(p=>p[metric]), colors:sorted.map(p=>p.platform==='Facebook'?'#2f5233':'#c0392b')};
   }
 }
-const metricLabels = {likes:'Likes', comments:'Reacties', shares:'Doorgestuurd', reach:'Bereik', views:'Weergaven', saves:'Saves', engagement:'Engagement'};
+const metricLabels = {likes:'Likes', comments:'Reacties', shares:'Doorgestuurd', reach:'Bereik', views:'Weergaven', saves:'Saves', watchDuration:'Kijktijd (sec)', engagement:'Engagement'};
 const groupLabels = {platform:'per platform', month:'per maand', week:'per week', post:'per post (top 10)'};
 const platformLabels = {all:'', Facebook:' - alleen Facebook', Instagram:' - alleen Instagram'};
 
