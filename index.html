@@ -789,6 +789,102 @@ function parseInstagramSheet(rows){
 }
 function postType(p){ return (p.watchDuration||0) > 0 ? 'Reel' : 'Post'; }
 
+function findColByKeywords(header, keywords){
+  for(const kw of keywords){
+    const i = header.findIndex(h=>String(h||'').trim().toLowerCase().includes(kw));
+    if(i>-1) return i;
+  }
+  return -1;
+}
+function findGenericHeaderRow(rows){
+  for(let i=0;i<rows.length;i++){
+    const row = rows[i]; if(!row) continue;
+    const joined = row.map(c=>String(c||'').toLowerCase());
+    const hasDate = joined.some(c=>c.includes('date')||c.includes('datum'));
+    const metricHits = ['engagement','likes','reach','views','weergaven','comments','reacties'].filter(k=>joined.some(c=>c.includes(k))).length;
+    if(hasDate && metricHits>=2) return i;
+  }
+  return -1;
+}
+function extractYearHint(text){
+  let m = (text||'').match(/(?:from|van)\s+\d{1,2}\s+\w+,?\s+(20\d{2})/i);
+  if(m) return parseInt(m[1],10);
+  m = (text||'').match(/\b(20\d{2})\b/);
+  if(m) return parseInt(m[1],10);
+  return new Date().getFullYear();
+}
+function smartParseDate(str, yearHint){
+  str = String(str||'').trim();
+  let m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[0].slice(0,10);
+  m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  m = str.match(/^([A-Za-z]{3,9})\s+(\d{1,2})/);
+  if(m){
+    const mi = months.indexOf(m[1].slice(0,3).toLowerCase());
+    if(mi>-1){ const d = new Date(Date.UTC(yearHint||new Date().getFullYear(), mi, parseInt(m[2],10))); if(!isNaN(d)) return d.toISOString().slice(0,10); }
+  }
+  const d = new Date(str);
+  if(!isNaN(d)) return d.toISOString().slice(0,10);
+  return '';
+}
+function parseGenericPostSheet(rows, fullText){
+  const hIdx = findGenericHeaderRow(rows);
+  if(hIdx===-1) return 0;
+  const header = rows[hIdx];
+  const yearHint = extractYearHint(fullText);
+  const idx = {
+    datum: findColByKeywords(header,['date','datum']), post: findColByKeywords(header,['post','tekst']),
+    comments: findColByKeywords(header,['comment','reacti','opmerking']), eng: findColByKeywords(header,['engagement']),
+    likes: findColByKeywords(header,['like']), reach: findColByKeywords(header,['reach','bereik']),
+    saves: findColByKeywords(header,['save']), shares: findColByKeywords(header,['share','delen','doorgestuurd']),
+    views: findColByKeywords(header,['view','weergave']), watch: findColByKeywords(header,['watch','kijktijd'])
+  };
+  let platform = (idx.reach>-1 || idx.saves>-1) ? 'Instagram' : 'Facebook';
+  if(/instagram/i.test(fullText||'') && !/facebook/i.test(fullText||'')) platform='Instagram';
+  else if(/facebook/i.test(fullText||'') && !/instagram/i.test(fullText||'')) platform='Facebook';
+  let added=0;
+  for(let i=hIdx+1;i<rows.length;i++){
+    const r = rows[i]; if(!r || idx.datum<0 || r[idx.datum]===undefined || r[idx.datum]===null || String(r[idx.datum]).trim()==='') continue;
+    const date = smartParseDate(r[idx.datum], yearHint); if(!date) continue;
+    state.posts.push({id:'p'+Date.now()+Math.random(), platform, date, text:String(r[idx.post]||'').slice(0,60),
+      comments:cleanNum(r[idx.comments]), engagement:cleanNum(r[idx.eng]), likes:cleanNum(r[idx.likes]),
+      reach:cleanNum(r[idx.reach]), shares:cleanNum(r[idx.shares]), views:cleanNum(r[idx.views]), saves:cleanNum(r[idx.saves]),
+      watchDuration: idx.watch>-1?cleanNum(r[idx.watch]):0});
+    added++;
+  }
+  return added;
+}
+function parsePdfTextStream(fullText){
+  const monthMap = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+  const yearHint = extractYearHint(fullText);
+  let platform = 'Instagram';
+  if(/facebook/i.test(fullText) && !/instagram/i.test(fullText)) platform='Facebook';
+  const dateRe = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2}),\s*(\d{1,2}):(\d{2})/g;
+  const matches = [...fullText.matchAll(dateRe)];
+  let added=0;
+  for(let i=0;i<matches.length;i++){
+    const m = matches[i];
+    const monIdx = monthMap[m[1].toLowerCase()]; if(monIdx===undefined) continue;
+    const dateObj = new Date(Date.UTC(yearHint, monIdx, parseInt(m[2],10)));
+    const dateStr = dateObj.toISOString().slice(0,10);
+    const chunkStart = m.index + m[0].length;
+    const chunkEnd = i+1<matches.length ? matches[i+1].index : fullText.length;
+    const chunk = fullText.slice(chunkStart, chunkEnd);
+    const capMatch = chunk.match(/^(.*?)(?=\s+-?\d[\d,]*\b)/s);
+    const caption = (capMatch ? capMatch[1] : chunk).replace(/\s+/g,' ').trim().slice(0,60);
+    const nums = (chunk.match(/-?\d[\d,]*/g) || []).map(n=>parseFloat(n.replace(/,/g,'')));
+    if(nums.length < 8) continue;
+    const last8 = nums.slice(-8);
+    const [comments, engagement, follows, likes, reach, saves, shares, views] = last8;
+    state.posts.push({id:'p'+Date.now()+Math.random(), platform, date:dateStr, text:caption||'(geen titel)',
+      comments:comments||0, engagement:engagement||0, likes:likes||0, reach:reach||0, saves:saves||0, shares:shares||0, views:views||0, watchDuration:0});
+    added++;
+  }
+  return added;
+}
+
 document.getElementById('xlsxUpload').addEventListener('change', (e)=>{
   const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
@@ -798,8 +894,12 @@ document.getElementById('xlsxUpload').addEventListener('change', (e)=>{
       let total=0;
       wb.SheetNames.forEach(name=>{
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, raw:false});
-        total += parseFacebookSheet(rows);
-        total += parseInstagramSheet(rows);
+        let sheetTotal = parseFacebookSheet(rows) + parseInstagramSheet(rows);
+        if(sheetTotal===0){
+          const fullText = rows.map(r=>(r||[]).join(' ')).join('\n') + '\n' + name;
+          sheetTotal = parseGenericPostSheet(rows, fullText);
+        }
+        total += sheetTotal;
       });
       document.getElementById('xlsxStatus').textContent = total>0 ? total+' posts toegevoegd uit '+file.name+'.' : 'Geen herkenbare Facebook- of Instagram-tabel gevonden in dit bestand.';
       saveState(); renderAll();
@@ -841,9 +941,11 @@ document.getElementById('pdfUpload').addEventListener('change', async (e)=>{
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data:buf}).promise;
     const rows = [];
+    let rawText = '';
     for(let p=1; p<=pdf.numPages; p++){
       const page = await pdf.getPage(p);
       const content = await page.getTextContent();
+      rawText += content.items.map(it=>it.str + (it.hasEOL ? '\n' : ' ')).join('') + '\n';
       const lineMap = {};
       content.items.forEach(item=>{
         const y = Math.round(item.transform[5]/3)*3;
@@ -856,10 +958,11 @@ document.getElementById('pdfUpload').addEventListener('change', async (e)=>{
       });
     }
     const rowsArr = rows.map(r=>r.split('\t'));
-    let added = parseFacebookSheet(rowsArr);
-    added += parseInstagramSheet(rowsArr);
+    let added = parseFacebookSheet(rowsArr) + parseInstagramSheet(rowsArr);
+    if(added===0) added = parseGenericPostSheet(rowsArr, rows.join('\n')+'\n'+rawText);
+    if(added===0) added = parsePdfTextStream(rawText);
     if(added>0){ document.getElementById('pdfStatus').textContent = added+' posts toegevoegd uit '+file.name+'.'; saveState(); renderAll(); }
-    else { document.getElementById('pdfStatus').textContent = 'Geen posts herkend in dit PDF-bestand. Mogelijk is de lay-out te afwijkend — probeer de Excel-export in plaats daarvan.'; }
+    else { document.getElementById('pdfStatus').textContent = 'Geen posts herkend in dit PDF-bestand. Controleer of het een post-overzicht met datums en cijfers bevat, of probeer de Excel-export.'; }
   }catch(err){
     document.getElementById('pdfStatus').textContent = 'Kon de PDF niet uitlezen: '+err.message;
   }
