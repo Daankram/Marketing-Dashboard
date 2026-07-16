@@ -236,8 +236,8 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <p class="hint">Klik op een post voor alle details.</p>
 <div style="overflow-x:auto"><table id="postsTable"></table></div>
 
-<p class="section-title" style="margin-top:24px">Weergaven per post, in tijdlijn</p>
-<p class="hint">Elke post op zijn plek in de tijd; hoe verder naar rechts, hoe meer kijkers. Klik op een bolletje voor de post.</p>
+<p class="section-title" style="margin-top:24px" id="timelineTitle">Weergaven per post, in tijdlijn</p>
+<p class="hint">Elke post op zijn plek in de tijd; hoe verder naar rechts, hoe hoger de waarde. Klik op een bolletje voor de post. Kies hierboven een ander onderdeel om de grafiek aan te passen.</p>
 <div class="chart-wrap" id="timelineWrap" style="height:420px"><canvas id="postsTimelineChart"></canvas></div>
 </div>
 
@@ -295,11 +295,16 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <summary style="cursor:pointer;font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;color:var(--forest)">Back-up en beheer</summary>
 <div style="margin-top:14px">
 <p class="hint">De data staat alleen lokaal in deze browser. Exporteer een back-up om over te zetten naar een andere computer of te delen met een collega.</p>
-<div style="display:flex;gap:8px;margin-bottom:20px">
+<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
 <button id="exportBtn">Exporteer data (.json)</button>
 <label for="importFile" style="display:inline-block;padding:9px 12px;border:1.5px solid var(--border-strong);border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;color:var(--text2)">Importeer data</label>
 <input type="file" id="importFile" accept=".json" style="display:none">
 </div>
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+<button id="undoLastImportBtn" style="background:var(--gold);border-color:var(--gold);color:#3a2a1d" disabled>Laatst toegevoegde data verwijderen</button>
+<button id="clearAllBtn" style="background:var(--red);border-color:var(--red)">Alle data verwijderen</button>
+</div>
+<p id="undoStatus" class="hint"></p>
 <p class="section-title" style="font-size:15px">Alle posts beheren</p>
 <div id="managePostsList"></div>
 </div>
@@ -400,6 +405,12 @@ try{
 if(!state.widgets) state.widgets = [];
 
 let charts = {};
+let lastImportBatch = [];
+function recordImportBatch(ids){
+  lastImportBatch = ids;
+  const btn = document.getElementById('undoLastImportBtn');
+  if(btn) btn.disabled = ids.length===0;
+}
 function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
 function monthKey(d){ return (d||'').slice(0,7); }
 function fmtNum(n){ return Math.round(n||0).toLocaleString('nl-NL'); }
@@ -563,9 +574,9 @@ document.getElementById('cmpBtn').addEventListener('click', ()=>{
   const s2=document.getElementById('cmpStart2').value, e2=document.getElementById('cmpEnd2').value;
   if(!s1||!e1||!s2||!e2){ document.getElementById('cmpResult').innerHTML='<p class="hint">Vul beide periodes in.</p>'; return; }
   const inRange=(d,s,e)=> d>=s && d<=e;
-  const agg=(s,e)=>state.posts.filter(p=>inRange(p.date,s,e)).reduce((a,p)=>({count:a.count+1,likes:a.likes+p.likes,comments:a.comments+p.comments,shares:a.shares+p.shares,reach:a.reach+p.reach,views:a.views+p.views,engagement:a.engagement+p.engagement}),{count:0,likes:0,comments:0,shares:0,reach:0,views:0,engagement:0});
+  const agg=(s,e)=>state.posts.filter(p=>inRange(p.date,s,e)).reduce((a,p)=>({count:a.count+1,likes:a.likes+p.likes,comments:a.comments+p.comments,shares:a.shares+p.shares,reach:a.reach+p.reach,views:a.views+p.views,saves:a.saves+p.saves,engagement:a.engagement+p.engagement}),{count:0,likes:0,comments:0,shares:0,reach:0,views:0,saves:0,engagement:0});
   const A=agg(s1,e1), B=agg(s2,e2);
-  const rows=[['Aantal posts','count'],['Likes','likes'],['Reacties','comments'],['Doorsturen','shares'],['Bereik','reach'],['Weergaven','views'],['Engagement','engagement']];
+  const rows=[['Aantal posts','count'],['Likes','likes'],['Reacties','comments'],['Doorsturen','shares'],['Bereik','reach'],['Weergaven','views'],['Saves','saves'],['Engagement','engagement']];
   const pct=(a,b)=> b===0 ? (a===0?'0':'+oneindig') : (((a-b)/b)*100).toFixed(0)+'%';
   let html='<table><tr><th>Statistiek</th><th>Periode A</th><th>Periode B</th><th>Verschil</th></tr>';
   rows.forEach(r=>{ const a=A[r[1]], b=B[r[1]]; const d=a-b; const sign = d>0?'+':''; html+='<tr><td>'+r[0]+'</td><td>'+fmtNum(a)+'</td><td>'+fmtNum(b)+'</td><td>'+sign+fmtNum(d)+' ('+pct(a,b)+')</td></tr>'; });
@@ -626,13 +637,15 @@ function renderPostsTab(){
   sorted.forEach(p=>{ const t=postType(p); html+='<tr class="post-clickable" data-id="'+p.id+'" style="cursor:pointer"><td>'+p.date+'</td><td>'+p.platform+'</td><td>'+(t==='Reel'?'🎬 Reel':'Post')+'</td><td>'+p.text.slice(0,30)+'</td><td>'+fmtNum(p.views)+'</td><td>'+fmtNum(p.reach)+'</td><td>'+fmtNum(p.likes)+'</td><td>'+fmtNum(p.comments)+'</td><td>'+fmtNum(p.shares)+'</td><td>'+fmtNum(p.saves)+'</td><td>'+fmtDuration(p.watchDuration)+'</td><td>'+fmtNum(p.engagement)+'</td></tr>'; });
   document.getElementById('postsTable').innerHTML=html;
   document.querySelectorAll('.post-clickable').forEach(el=>el.addEventListener('click', ()=>openPostDetail(el.dataset.id)));
-  renderPostsTimeline(posts);
+  renderPostsTimeline(posts, metric);
 }
 document.getElementById('postsPlatformFilter').addEventListener('change', renderPostsTab);
 document.getElementById('postsTypeFilter').addEventListener('change', renderPostsTab);
 document.getElementById('postsMetric').addEventListener('change', renderPostsTab);
 
-function renderPostsTimeline(posts){
+function renderPostsTimeline(posts, metric){
+  metric = metric || 'views';
+  document.getElementById('timelineTitle').textContent = metricLabels[metric]+' per post, in tijdlijn';
   const sorted = [...posts].sort((a,b)=>a.date.localeCompare(b.date));
   if(charts.timeline) charts.timeline.destroy();
   const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
@@ -646,10 +659,11 @@ function renderPostsTimeline(posts){
   }
   wrap.style.height = Math.max(280, sorted.length*34)+'px';
   wrap.innerHTML = '<canvas id="postsTimelineChart"></canvas>';
+  const isDuration = metric==='watchDuration';
   charts.timeline = new Chart(document.getElementById('postsTimelineChart'), {
     type:'line',
     data:{labels:sorted.map(p=>p.date+' · '+p.platform+(postType(p)==='Reel'?' 🎬':'')), datasets:[{
-      data:sorted.map(p=>p.views), borderColor:'#7a4fa0', backgroundColor:'rgba(122,79,160,0.10)',
+      data:sorted.map(p=>p[metric]), borderColor:'#7a4fa0', backgroundColor:'rgba(122,79,160,0.10)',
       borderWidth:2, pointRadius:6, pointHoverRadius:9,
       pointBackgroundColor:sorted.map(p=>p.platform==='Facebook'?'#2f5233':'#c0392b'),
       pointBorderColor:'#fff', pointBorderWidth:1.5, fill:false, tension:0.1
@@ -659,9 +673,9 @@ function renderPostsTimeline(posts){
       plugins:{legend:{display:false},
         tooltip:{callbacks:{
           title:(items)=>{ const p = sorted[items[0].dataIndex]; return p ? p.text.slice(0,40) : ''; },
-          label:(ctx)=> 'Weergaven: '+fmtNum(ctx.parsed.x)
+          label:(ctx)=> metricLabels[metric]+': '+(isDuration ? fmtDuration(ctx.parsed.x) : fmtNum(ctx.parsed.x))
         }}},
-      scales:{x:{grid:{color:grid},ticks:{color:muted,callback:v=>fmtNum(v)},beginAtZero:true,title:{display:true,text:'Aantal kijkers / weergaven',color:muted}},
+      scales:{x:{grid:{color:grid},ticks:{color:muted,callback:v=>isDuration?fmtDuration(v):fmtNum(v)},beginAtZero:true,title:{display:true,text:metricLabels[metric],color:muted}},
         y:{grid:{display:false},ticks:{color:muted,font:{size:10}}}},
       onClick:(evt, elements)=>{ if(elements.length){ const post = sorted[elements[0].index]; if(post) openPostDetail(post.id); } },
       onHover:(evt, elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
@@ -703,6 +717,10 @@ function parseDuration(str){
   str = String(str||'').trim();
   if(!str) return 0;
   if(/^\d+([.,]\d+)?$/.test(str)) return cleanNum(str);
+  const colon = str.match(/^(\d+):(\d{2}):(\d{2})$/);
+  if(colon) return parseInt(colon[1],10)*3600 + parseInt(colon[2],10)*60 + parseInt(colon[3],10);
+  const colon2 = str.match(/^(\d+):(\d{2})$/);
+  if(colon2) return parseInt(colon2[1],10)*60 + parseInt(colon2[2],10);
   let total = 0;
   const d = str.match(/(\d+)\s*d/i); if(d) total += parseInt(d[1],10)*86400;
   const h = str.match(/(\d+)\s*h/i); if(h) total += parseInt(h[1],10)*3600;
@@ -712,7 +730,7 @@ function parseDuration(str){
 }
 function fmtDuration(sec){
   sec = Math.round(sec||0);
-  if(sec<=0) return '0s';
+  if(sec<=0) return '-';
   const d = Math.floor(sec/86400), h = Math.floor((sec%86400)/3600), m = Math.floor((sec%3600)/60), s = sec%60;
   if(d>0) return d+'d'+(h>0?' '+h+'h':'');
   if(h>0) return h+'h'+(m>0?' '+m+'m':'');
@@ -889,27 +907,44 @@ function parsePdfByColumns(items, fullText){
   });
   const lines = Object.keys(lineMap).map(Number).map(y=>({y, items: lineMap[y].sort((a,b)=>a.x-b.x)}));
   lines.sort((a,b)=>b.y-a.y);
-  let threshold = 480;
-  items.forEach(it=>{ if(String(it.text).trim().toUpperCase()==='COMMENTS') threshold = it.x - 20; });
+
+  const headerNames = {comments:'COMMENTS', engagement:'ENGAGEMENT', follows:'FOLLOWS', likes:'LIKES', reach:'REACH', saves:'SAVES', shares:'SHARES', views:'VIEWS'};
+  const colX = {};
+  items.forEach(it=>{
+    const t = String(it.text).trim().toUpperCase().replace(/[.:…]+$/,'');
+    Object.keys(headerNames).forEach(k=>{ if(t===headerNames[k] && colX[k]===undefined) colX[k]=it.x; });
+    if(t==='REEL' && colX.watch===undefined) colX.watch = it.x;
+    if(t.indexOf('WATC')===0 && colX.watch!==undefined) colX.watch = (colX.watch+it.x)/2;
+  });
+  const requiredKeys = ['comments','engagement','likes','reach','saves','shares','views'];
+  if(requiredKeys.some(k=>colX[k]===undefined)) return 0;
+  const threshold = colX.comments - 25;
+  const orderedKeys = Object.keys(colX).sort((a,b)=>colX[a]-colX[b]);
+
   const monthMap = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
   const dateRe = /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2}),?\s*(\d{1,2}):(\d{2})/;
+  const isValTok = t=> /^-?\d[\d,]*$/.test(t) || /^(?=\S)(\d+d)?(\d+h)?(\d+m)?(\d+s)?$/i.test(t);
   const dateLines = [], metricLines = [];
   lines.forEach(line=>{
     const text = line.items.map(it=>it.text).join(' ');
     const dm = text.match(dateRe);
     if(dm) dateLines.push({y:line.y, m:dm});
-    const rightItems = line.items.filter(it=>it.x>=threshold).map(it=>String(it.text).trim()).filter(Boolean);
-    if(rightItems.length>=8){
-      const numericLike = rightItems.filter(t=>/^-?\d[\d,]*$/.test(t) || /^(\d+d)?(\d+h)?(\d+m)?(\d+s)$/.test(t)).length;
-      if(numericLike>=7) metricLines.push({y:line.y, tokens:rightItems.slice(0,9)});
-    }
+    const rightItems = line.items.filter(it=>it.x>=threshold && isValTok(String(it.text).trim()));
+    if(rightItems.length>=Math.min(7,orderedKeys.length)) metricLines.push({y:line.y, items:rightItems});
   });
+
   let added=0;
   dateLines.forEach(dl=>{
     let best=null, bestDist=Infinity;
     metricLines.forEach(ml=>{ const dist=Math.abs(ml.y-dl.y); if(dist<bestDist){ bestDist=dist; best=ml; } });
-    if(!best || bestDist>25 || best.tokens.length<9) return;
-    const [comments,engagement,follows,likes,reach,watchStr,saves,shares,views] = best.tokens;
+    if(!best || bestDist>25) return;
+    const toks = best.items.slice().sort((a,b)=>a.x-b.x);
+    const keysToUse = orderedKeys.length===toks.length ? orderedKeys : orderedKeys.slice(0, toks.length);
+    const values = {};
+    keysToUse.forEach((k,i)=>{ if(toks[i]) values[k] = String(toks[i].text).trim(); });
+    const comments=values.comments, engagement=values.engagement, likes=values.likes, reach=values.reach,
+          saves=values.saves, shares=values.shares, views=values.views, watchStr=values.watch||'0s';
+    if(comments===undefined || engagement===undefined || likes===undefined || reach===undefined || views===undefined) return;
     const monIdx = monthMap[dl.m[1].toLowerCase()]; if(monIdx===undefined) return;
     const dateObj = new Date(Date.UTC(yearHint, monIdx, parseInt(dl.m[2],10)));
     const captionParts = [];
@@ -974,6 +1009,7 @@ document.getElementById('xlsxUpload').addEventListener('change', (e)=>{
   const reader = new FileReader();
   reader.onload = (ev)=>{
     try{
+      const beforeCount = state.posts.length;
       const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
       let total=0;
       wb.SheetNames.forEach(name=>{
@@ -985,6 +1021,7 @@ document.getElementById('xlsxUpload').addEventListener('change', (e)=>{
         }
         total += sheetTotal;
       });
+      recordImportBatch(state.posts.slice(beforeCount).map(p=>p.id));
       document.getElementById('xlsxStatus').textContent = total>0 ? total+' posts toegevoegd uit '+file.name+'.' : 'Geen herkenbare Facebook- of Instagram-tabel gevonden in dit bestand.';
       saveState(); renderAll();
     }catch(err){
@@ -1008,12 +1045,30 @@ document.getElementById('importFile').addEventListener('change', (e)=>{
   reader.onload = (ev)=>{
     try{
       const imported = JSON.parse(ev.target.result);
-      if(imported.posts && imported.followerStats){ state = imported; saveState(); renderAll(); alert('Back-up geimporteerd.'); }
+      if(imported.posts && imported.followerStats){ state = imported; if(!state.widgets) state.widgets=[]; recordImportBatch([]); saveState(); renderAll(); alert('Back-up geimporteerd.'); }
       else alert('Dit bestand heeft niet het juiste formaat.');
     }catch(err){ alert('Kon het bestand niet lezen: '+err.message); }
     e.target.value='';
   };
   reader.readAsText(file);
+});
+
+document.getElementById('undoLastImportBtn').addEventListener('click', ()=>{
+  if(!lastImportBatch.length) return;
+  const n = lastImportBatch.length;
+  state.posts = state.posts.filter(p=>!lastImportBatch.includes(p.id));
+  recordImportBatch([]);
+  saveState(); renderAll();
+  document.getElementById('undoStatus').textContent = n+' posts van de laatste import verwijderd.';
+});
+
+document.getElementById('clearAllBtn').addEventListener('click', ()=>{
+  if(!confirm('Weet je het zeker? Dit verwijdert ALLE posts en volgersdata uit dit dashboard. Dit kan niet ongedaan worden gemaakt (maak eventueel eerst een back-up).')) return;
+  state.posts = [];
+  state.followerStats = [];
+  recordImportBatch([]);
+  saveState(); renderAll();
+  document.getElementById('undoStatus').textContent = 'Alle data is verwijderd.';
 });
 
 if(window['pdfjsLib']) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1044,6 +1099,7 @@ document.getElementById('pdfUpload').addEventListener('change', async (e)=>{
       });
     }
     const rowsArr = rows.map(r=>r.split('\t'));
+    const beforeCount = state.posts.length;
     function tryParser(fn, ...args){
       const before = state.posts.length;
       const n = fn(...args);
@@ -1058,6 +1114,7 @@ document.getElementById('pdfUpload').addEventListener('change', async (e)=>{
     if(added===0) added = tryParser(parsePdfTextStream, rawText);
     if(added===0) added = tryParser(parseFacebookSheet, rowsArr) + tryParser(parseInstagramSheet, rowsArr);
     if(added===0) added = tryParser(parseGenericPostSheet, rowsArr, rows.join('\n')+'\n'+rawText);
+    recordImportBatch(state.posts.slice(beforeCount).map(p=>p.id));
     if(added>0){ document.getElementById('pdfStatus').textContent = added+' posts toegevoegd uit '+file.name+'.'; saveState(); renderAll(); }
     else { document.getElementById('pdfStatus').textContent = 'Geen posts herkend in dit PDF-bestand. Controleer of het een post-overzicht met datums en cijfers bevat, of probeer de Excel-export.'; }
   }catch(err){
