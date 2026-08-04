@@ -3,6 +3,14 @@
   Marketing dashboard - Hans & Grietje en zusterlocaties
   ============================================================
   CHANGELOG
+  2026-08-04-v15
+   - Meta-Facebook EXCEL-export (.xlsx) ondersteund: nieuwe parser
+     isMetaFacebookSheet/parseMetaFacebookSheet koppelt op kolomnaam.
+     Datum uit "Publicatietijdstip" (de "Datum"-kolom bevat vaak "Looptijd");
+     Reacties=likes, Deelacties=shares, Seconden bekeken=kijktijd; caption uit
+     Omschrijving/Titel met overslaan van interne "copy_..."-codes.
+  2026-08-04-v14
+   - Meta-Facebook PDF-export ondersteund (tabel, NL-koppen, MM/DD/YYYY).
   2026-07-28-v12
    - PDF-kolomkoppeling gecorrigeerd: waarden worden uitsluitend op x-grenzen gekoppeld;
      samengestelde kijktijd zoals 9h 8m blijft één waarde. Follows wordt overal bewaard en getoond.
@@ -477,7 +485,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 /* ============================================================
    Marketing dashboard - multi-vestiging applicatielogica
    ============================================================ */
-const DASHBOARD_BUILD = "2026-08-04-v14";
+const DASHBOARD_BUILD = "2026-08-04-v15";
 document.getElementById('buildStamp').textContent = 'Dashboard build: ' + DASHBOARD_BUILD;
 
 /* ---- Vestigingen ---- */
@@ -1161,6 +1169,79 @@ function parseGenericSheet(rows, fullText){
   return out;
 }
 
+/* ------------------------------------------------------------
+   META-FACEBOOK EXCEL (tabel-export, NL-koppen, MM/DD/YYYY)
+   Zelfde tabel als de Meta-PDF maar als .xlsx. Header begint met
+   "Bericht-ID"; koppeling gebeurt op KOLOMNAAM (robuuster dan positie).
+   Bijzonderheden van deze export:
+    - De "Datum"-kolom bevat vaak de tekst "Looptijd"; de betrouwbare
+      datum staat in "Publicatietijdstip" (MM/DD/YYYY HH:MM).
+    - "Reacties" (=likes) moet exact matchen, niet "Reacties, opmerkingen
+      en deelacties" (=engagement).
+    - "Seconden bekeken" = kijktijd in seconden (alleen bij Video's).
+    - Caption: Omschrijving, anders Titel; interne "copy_..."-codes worden
+      overgeslagen.
+   ------------------------------------------------------------ */
+function parseMetaDate(s){
+  s=String(s||'').trim();
+  let m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);   // MM/DD/YYYY
+  if(m) return m[3]+'-'+m[1]+'-'+m[2];
+  m=s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);      // D-M-YYYY (SheetJS nl-format)
+  if(m) return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);          // ISO
+  if(m) return m[0].slice(0,10);
+  return null;
+}
+function isMetaFacebookSheet(rows){
+  return rows.some(r=> r && String(r[0]||'').trim()==='Bericht-ID')
+      && rows.some(r=> r && r.some(c=>/Berichttype/i.test(String(c||''))));
+}
+function parseMetaFacebookSheet(rows){
+  const hIdx=rows.findIndex(r=> r && String(r[0]||'').trim()==='Bericht-ID');
+  if(hIdx===-1) return [];
+  const H=rows[hIdx].map(h=>String(h||'').trim());
+  const exact=n=>H.findIndex(h=>h.toLowerCase()===n.toLowerCase());
+  const starts=n=>H.findIndex(h=>h.toLowerCase().startsWith(n.toLowerCase()));
+  const idx={
+    datum:exact('Datum'), pub:starts('Publicatietijdstip'),
+    titel:exact('Titel'), oms:exact('Omschrijving'), btype:exact('Berichttype'),
+    weergaven:starts('Weergaven'), bereik:starts('Bereik'),
+    eng:starts('Reacties, opmerkingen'), reacties:exact('Reacties'),
+    opm:exact('Opmerkingen'), deel:exact('Deelacties'), sec:starts('Seconden bekeken')
+  };
+  const isCode = s=>/^copy_[0-9a-f-]+$/i.test(s) || /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(s);
+  const out=[];
+  for(let i=hIdx+1;i<rows.length;i++){
+    const r=rows[i]; if(!r) continue;
+    let dateSrc = (idx.pub>-1) ? r[idx.pub] : (idx.datum>-1?r[idx.datum]:'');
+    let date=parseMetaDate(dateSrc);
+    if(!date && idx.datum>-1) date=parseMetaDate(r[idx.datum]);
+    if(!date) continue;
+    const isVideo = /video/i.test(String(idx.btype>-1?r[idx.btype]:''));
+    const secVal = idx.sec>-1 ? parseNumber(r[idx.sec]) : null;
+    const watch = (isVideo && secVal!==null) ? secVal : null;
+    const titel = normalizeText(idx.titel>-1?r[idx.titel]:'');
+    const oms   = normalizeText(idx.oms>-1?r[idx.oms]:'');
+    let caption='';
+    if(oms && !isCode(oms)) caption=oms;
+    else if(titel && !isCode(titel)) caption=titel;
+    else caption=oms||titel||'';
+    out.push({
+      platform:'Facebook', date, text:caption.slice(0,80),
+      comments: idx.opm>-1?parseNumber(r[idx.opm]):null,
+      engagement: idx.eng>-1?parseNumber(r[idx.eng]):null,
+      likes: idx.reacties>-1?parseNumber(r[idx.reacties]):null,
+      reach: idx.bereik>-1?parseNumber(r[idx.bereik]):null,
+      shares: idx.deel>-1?parseNumber(r[idx.deel]):null,
+      views: idx.weergaven>-1?parseNumber(r[idx.weergaven]):null,
+      saves:null, follows:null,
+      watchDuration: watch,
+      postType: (watch!==null && watch>0)?'reel':'post'
+    });
+  }
+  return out;
+}
+
 /* ============================================================
    IMPORT-VOORVERTONING
    ============================================================ */
@@ -1624,8 +1705,14 @@ document.getElementById('xlsxUpload').addEventListener('change',(e)=>{
       let all=[];
       wb.SheetNames.forEach(name=>{
         const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:false});
-        let sheet=parseFacebookSheet(rows).concat(parseInstagramSheet(rows));
-        if(sheet.length===0){ const fullText=rows.map(r=>(r||[]).join(' ')).join('\n')+'\n'+name; sheet=parseGenericSheet(rows,fullText); }
+        let sheet;
+        if(isMetaFacebookSheet(rows)){
+          // Meta-Facebook tabel-export (bv. Hans & Grietje / zusterlocaties)
+          sheet=parseMetaFacebookSheet(rows);
+        } else {
+          sheet=parseFacebookSheet(rows).concat(parseInstagramSheet(rows));
+          if(sheet.length===0){ const fullText=rows.map(r=>(r||[]).join(' ')).join('\n')+'\n'+name; sheet=parseGenericSheet(rows,fullText); }
+        }
         all=all.concat(sheet);
       });
       if(all.length===0){ document.getElementById('xlsxStatus').textContent='Geen herkenbare Facebook- of Instagram-tabel gevonden in dit bestand.'; e.target.value=''; return; }
