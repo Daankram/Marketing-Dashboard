@@ -167,7 +167,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <div style="text-align:center;max-width:300px;background:var(--card);padding:20px 28px 32px;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,0.25)">
 <img src="assets/heks.png" alt="" style="width:100px;margin:-46px auto 6px;display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,0.3))">
 <p style="font-family:'Fredoka',sans-serif;font-size:19px;margin:0 0 4px;color:var(--forest);font-weight:600">Sprookjeslocaties</p>
-<p style="font-size:12px;margin:0 0 18px;color:var(--text2)">De heks bewaakt het dashboard — voer de toegangscode in</p>
+<p style="font-size:12px;margin:0 0 18px;color:var(--text2)">De heks bewaakt het dashboard - voer de toegangscode in</p>
 <input type="password" id="gateCode" placeholder="Toegangscode" style="width:100%;margin-bottom:10px;text-align:center" autocomplete="off">
 <br>
 <button id="gateBtn" style="width:100%">Openen</button>
@@ -187,7 +187,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <div class="hg-header"><div class="hg-header-inner" style="text-align:center">
 <img src="assets/logo.png" alt="Hans &amp; Grietje" style="width:220px;max-width:70%;margin:0 auto 6px;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.25))">
 <h1 id="companyTitle">Marketing dashboard</h1>
-<p class="hg-sub">Sociale-mediaprestaties per vestiging in één overzicht</p>
+<p class="hg-sub">Sociale-mediaprestaties per vestiging in een overzicht</p>
 <div class="active-company-badge"><span class="badge-dot"></span><span id="companyBadge">Hans &amp; Grietje</span></div>
 </div></div>
 
@@ -317,7 +317,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <div style="background:var(--card-tint);border:1.5px solid var(--gold);border-radius:var(--radius);padding:12px 16px;margin-bottom:18px">
 <label style="margin-bottom:6px">Data importeren voor vestiging</label>
 <select id="uploadCompany" style="width:100%"></select>
-<p class="hint" style="margin:8px 0 0">Controleer vóór de import of de juiste vestiging is geselecteerd. De parser gokt dit niet zelf op basis van de tekst.</p>
+<p class="hint" style="margin:8px 0 0">Controleer voor de import of de juiste vestiging is geselecteerd. De parser gokt dit niet zelf op basis van de tekst.</p>
 </div>
 
 <p class="section-title">Data uploaden</p>
@@ -368,7 +368,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
 <button id="undoLastImportBtn" style="background:var(--gold);border-color:var(--gold);color:#3a2a1d" disabled>Laatste import verwijderen</button>
 <button id="clearCompanyBtn" style="background:var(--red);border-color:var(--red)">Alle data van deze vestiging</button>
-<button id="clearAllBtn" class="secondary" style="border-color:var(--red);color:var(--red)">Alle data van álle vestigingen</button>
+<button id="clearAllBtn" class="secondary" style="border-color:var(--red);color:var(--red)">Alle data van alle vestigingen</button>
 </div>
 <p id="undoStatus" class="hint"></p>
 <p class="section-title" style="font-size:15px">Alle posts van deze vestiging beheren</p>
@@ -431,7 +431,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 
 <div style="text-align:center;margin-top:12px;opacity:0.9">
 <img src="assets/snoephuisje.png" alt="Hans en Grietje bij het snoephuisje" style="width:180px;max-width:60%">
-<p class="hint" style="margin-top:-8px">Sprookjeslocaties · Marketing dashboard</p>
+<p class="hint" style="margin-top:-8px">Sprookjeslocaties - Marketing dashboard</p>
 <p class="hint" style="font-size:10px;opacity:0.6" id="buildStamp"></p>
 </div>
 </div>
@@ -477,7 +477,7 @@ label{font-size:12px;color:var(--text2);display:block;margin:0 0 4px;font-weight
 /* ============================================================
    Marketing dashboard - multi-vestiging applicatielogica
    ============================================================ */
-const DASHBOARD_BUILD = "2026-07-28-v12";
+const DASHBOARD_BUILD = "2026-08-04-v14";
 document.getElementById('buildStamp').textContent = 'Dashboard build: ' + DASHBOARD_BUILD;
 
 /* ---- Vestigingen ---- */
@@ -523,7 +523,6 @@ function createDefaultState(){
   return st;
 }
 function normalizePost(p){
-  // ensure every field exists; keep null vs 0 where relevant but default metrics to 0 for legacy
   return {
     id: p.id || ('p'+Date.now()+Math.random().toString(36).slice(2)),
     platform: p.platform || 'Instagram',
@@ -539,7 +538,6 @@ function normalizePost(p){
 }
 
 function migrateLegacyState(){
-  // returns {migrated:boolean, state}
   let legacyRaw = null;
   try{ legacyRaw = localStorage.getItem(LEGACY_KEY); }catch(e){}
   const st = createDefaultState();
@@ -550,12 +548,10 @@ function migrateLegacyState(){
       hg.posts = (legacy.posts||[]).map(normalizePost);
       hg.followerStats = legacy.followerStats||[];
       hg.widgets = legacy.widgets||[];
-      // bewaar een back-up van de oude structuur (eenmalig)
       try{ if(!localStorage.getItem(LEGACY_BACKUP_KEY)) localStorage.setItem(LEGACY_BACKUP_KEY, legacyRaw); }catch(e){}
       return { migrated:true, state:st };
-    }catch(e){ /* corrupte legacy -> verse seed */ }
+    }catch(e){ }
   }
-  // verse installatie: seed alleen Hans & Grietje met demo
   st.companies["hans-grietje"].posts = seedPostsHG.map(normalizePost);
   st.companies["hans-grietje"].followerStats = seedFollowersHG.slice();
   return { migrated:false, state:st };
@@ -568,7 +564,6 @@ function loadState(){
     try{
       const parsed = JSON.parse(raw);
       if(parsed && parsed.version===2 && parsed.companies){
-        // repareer ontbrekende vestigingen/velden
         COMPANY_ORDER.forEach(id=>{ if(!parsed.companies[id]) parsed.companies[id]=createDefaultCompanyState(); });
         Object.keys(parsed.companies).forEach(id=>{
           const c=parsed.companies[id];
@@ -580,9 +575,8 @@ function loadState(){
         if(!COMPANIES[parsed.activeCompanyId]) parsed.activeCompanyId="hans-grietje";
         return { state:parsed, migratedNow:false };
       }
-    }catch(e){ /* corrupte v2 -> val terug op migratie */ }
+    }catch(e){ }
   }
-  // geen v2 aanwezig: probeer legacy-migratie
   const m = migrateLegacyState();
   return { state:m.state, migratedNow:m.migrated };
 }
@@ -598,7 +592,7 @@ function saveState(){
     }
   }
 }
-saveState(); // schrijf direct de (gemigreerde) v2-structuur weg
+saveState();
 
 /* ---- Actieve vestiging ---- */
 function getActiveCompanyId(){ return state.activeCompanyId; }
@@ -679,7 +673,7 @@ function parseDuration(v){
   let mn=s.match(/(\d+(?:[.,]\d+)?)\s*m(?:in)?(?![s])/); if(mn){ total+=parseFloat(mn[1].replace(',','.'))*60; matched=true; }
   let sec=s.match(/(\d+(?:[.,]\d+)?)\s*s(?:ec)?/); if(sec){ total+=parseFloat(sec[1].replace(',','.')); matched=true; }
   if(matched) return total;
-  if(/^\d+([.,]\d+)?$/.test(s)) return parseFloat(s.replace(',','.')); // bare seconds ("8.4")
+  if(/^\d+([.,]\d+)?$/.test(s)) return parseFloat(s.replace(',','.'));
   return null;
 }
 console.assert(parseDuration('9h 8m')===32880,'parseDuration 9h 8m');
@@ -700,13 +694,13 @@ function monthIndex(name){
 function parseDate(str, yearHint){
   const s=String(str||'').trim();
   if(!s) return null;
-  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[0].slice(0,10);            // ISO
-  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);                                  // d-m-Y
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[0].slice(0,10);
+  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
   if(m) return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
-  m=s.match(/^([A-Za-z]{3,9})\.?\s+(\d{1,2})/);                                         // "Jun 27" / "Jun 27, 15:58"
+  m=s.match(/^([A-Za-z]{3,9})\.?\s+(\d{1,2})/);
   if(m){ const mi=monthIndex(m[1]); if(mi>-1){ const y=yearHint||new Date().getFullYear();
     const d=new Date(Date.UTC(y,mi,parseInt(m[2],10))); if(!isNaN(d)) return d.toISOString().slice(0,10); } }
-  m=s.match(/(\d{1,2})\s+([A-Za-z]{3,9})\.?\s*(\d{4})?/);                               // "27 juni 2026"
+  m=s.match(/(\d{1,2})\s+([A-Za-z]{3,9})\.?\s*(\d{4})?/);
   if(m){ const mi=monthIndex(m[2]); if(mi>-1){ const y=m[3]?parseInt(m[3],10):(yearHint||new Date().getFullYear());
     const d=new Date(Date.UTC(y,mi,parseInt(m[1],10))); if(!isNaN(d)) return d.toISOString().slice(0,10); } }
   const dd=new Date(s); if(!isNaN(dd)) return dd.toISOString().slice(0,10);
@@ -731,7 +725,7 @@ const PDF_HEADER_ALIASES = {
   follows:['FOLLOWS','VOLGERS','FOLLOWERS'],
   likes:['LIKES','VINDIKLEUKS'],
   reach:['REACH','BEREIK'],
-  watch:['REEL','WATCH','WATCHTIME','KIJKTIJD','WATC'],   // "REEL WATCH TIME" komt in fragmenten
+  watch:['REEL','WATCH','WATCHTIME','KIJKTIJD','WATC'],
   saves:['SAVES','OPGESLAGEN'],
   shares:['SHARES','DELEN','DOORGESTUURD'],
   views:['VIEWS','WEERGAVEN','IMPRESSIONS','IMPRESSIES']
@@ -800,8 +794,6 @@ function headerKeyForToken(rawText){
   return null;
 }
 function detectColumns(items){
-  // Alleen betrouwbaar op de ECHTE koptekstregel: de y-regel met de meeste
-  // kolomkop-treffers. Zo matchen losse woorden als "Reel," in de filterregel niet.
   const lines=groupLines(items,3);
   let bestLine=null, bestCount=-1;
   lines.forEach(line=>{
@@ -810,14 +802,76 @@ function detectColumns(items){
     if(keys.size>bestCount){ bestCount=keys.size; bestLine=line; }
   });
   const colX={};
-  if(!bestLine || bestCount<3) return colX; // geen herkenbare koptekstregel
-  // gebruik de linkerpositie van het EERSTE item dat bij een kolom hoort
-  // (kopteksten kunnen in fragmenten staan, bv. "REEL" + "WATCH TIME")
+  if(!bestLine || bestCount<3) return colX;
   bestLine.items.forEach(it=>{
     const k=headerKeyForToken(it.text);
     if(k && colX[k]===undefined) colX[k]=it.x;
   });
   return colX;
+}
+
+/* ------------------------------------------------------------
+   META-FACEBOOK PDF (tabel-export, NL-koppen, MM/DD/YYYY)
+   Kolommen: Bericht-ID ... Berichttype ... Datum, Weergaven,
+   Bereik, "Reacties, opmerkingen en deelacties", Reacties,
+   Opmerkingen, Deelacties, ... Seconden bekeken ...
+   Aanpak: elke datarij begint met een 15-17-cijferig Bericht-ID;
+   het woord "Looptijd" (label van "Type onderschrift") is het anker,
+   daarna volgen de metrieken in vaste volgorde. Robuust tegen de
+   variabele tokenlengte tussen Foto's (24) en Video's (28).
+   ------------------------------------------------------------ */
+function isMetaFacebookPdf(fullText){
+  const t=fullText||'';
+  return /Bericht-ID/i.test(t) && /Pagina-ID/i.test(t) &&
+         /Berichttype/i.test(t) && /(Deelacties|Weergaven)/i.test(t);
+}
+function parseMetaFacebookPdf(items, fullText, fileName){
+  const diag={ profile:'Meta Facebook (tabel)', rawItems:items.length, lines:0,
+    records:0, skipped:[], headerCols:{}, unmatchedCols:[], pages:0 };
+  const lines=groupLines(items,3);
+  diag.lines=lines.length;
+
+  const idRe=/^\d{15,17}$/;
+  const dateRe=/^(\d{2})\/(\d{2})\/(\d{4})$/;   // MM/DD/YYYY
+  const timeRe=/^\d{1,2}:\d{2}$/;
+
+  const rows=[];
+  lines.forEach(line=>{
+    const toks=line.items.map(i=>normalizeText(i.text)).filter(Boolean);
+    if(!toks.length || !idRe.test(toks[0])) return;
+
+    const li=toks.indexOf('Looptijd');   // anker
+    if(li===-1){ diag.skipped.push({y:Math.round(line.y),reason:'geen Looptijd-anker'}); return; }
+    const m=toks.slice(li+1);
+
+    let date=null,time=null;
+    for(let i=0;i<toks.length;i++){
+      const dm=toks[i].match(dateRe);
+      if(dm){ date=dm[3]+'-'+dm[1]+'-'+dm[2];   // -> YYYY-MM-DD (Meta = MM/DD/YYYY)
+        if(i+1<toks.length && timeRe.test(toks[i+1])) time=toks[i+1].padStart(5,'0');
+        break; }
+    }
+
+    const isVideo = toks.includes("Video's");
+    const btype = isVideo ? 'reel' : (toks.includes("Foto's") ? 'post' : 'post');
+
+    // metriek-volgorde na "Looptijd":
+    // 0 Weergaven | 1 Bereik | 2 (Reacties+opmerkingen+deelacties=engagement)
+    // 3 Reacties (=likes) | 4 Opmerkingen (=comments) | 5 Deelacties (=shares)
+    // 6 Totaal klikken | 7 Overige klikken | (Video's: 8 Seconden bekeken)
+    const gi=i=> (i<m.length? m[i]: null);
+    rows.push({
+      date, time, platform:'Facebook', caption:'',
+      views:gi(0), reach:gi(1), engagement:gi(2),
+      likes:gi(3), comments:gi(4), shares:gi(5),
+      saves:null, follows:null,
+      watch: isVideo ? gi(8) : null,
+      postType:btype
+    });
+  });
+
+  diag.records=rows.length;
+  return { rows, diagnostics:diag, profile:{ platform:'Facebook', label:'Meta Facebook (tabel)' } };
 }
 
 /* parsePdf: neemt ruwe pdf.js-items {x,y,text,page}, geeft {rows, diagnostics} — atomair, wijzigt niets */
@@ -848,7 +902,6 @@ function parsePdf(items, fullText, fileName){
            /^(?:\d+d)?(?:\d+h)?(?:\d+m)?(?:\d+s)?$/i.test(s.replace(/\s/g,''));
   };
 
-  // classificeer regels
   const dateLines=[], valueLines=[];
   lines.forEach(line=>{
     const joined = line.items.map(i=>i.text).join(' ');
@@ -859,8 +912,6 @@ function parsePdf(items, fullText, fileName){
   });
 
   function tokensToRecord(vitems){
-    // Koppel uitsluitend op x-grenzen tussen de gedetecteerde kolommen.
-    // Dit voorkomt dat het fragment "8m" uit "9h 8m" als SHARES wordt gelezen.
     const cols=orderedKeys.map((key,index)=>{
       const x=colX[key];
       const prev=index>0?colX[orderedKeys[index-1]]:null;
@@ -884,22 +935,18 @@ function parsePdf(items, fullText, fileName){
     return r;
   }
 
-  // caption-kolom begint rechts van avatar/account/datum (~x230) en loopt tot de waardekolom
   const CAPTION_X_MIN = 230;
-  // In deze export staat de caption op de waarderegel zelf plus de regel(s) er direct
-  // boven (hogere y). We begrenzen het blok tot halverwege naar de vorige/volgende post.
-  const vlYs = [...valueLines].map(v=>v.y).sort((a,b)=>b-a); // hoog -> laag
+  const vlYs = [...valueLines].map(v=>v.y).sort((a,b)=>b-a);
   function blockRangeFor(valueY){
     const idx = vlYs.indexOf(valueY);
-    const prevY = idx>0 ? vlYs[idx-1] : valueY + 90;   // post erboven (hogere y)
-    const upper = (valueY + prevY)/2;                  // tot halverwege de vorige post
-    const lower = valueY - 4;                          // net onder de waarderegel
+    const prevY = idx>0 ? vlYs[idx-1] : valueY + 90;
+    const upper = (valueY + prevY)/2;
+    const lower = valueY - 4;
     return { lower, upper };
   }
 
   const rows=[];
   dateLines.forEach(dl=>{
-    // koppel dichtstbijzijnde value-regel
     let best=null,bd=Infinity;
     valueLines.forEach(vl=>{ const d=Math.abs(vl.y-dl.y); if(d<bd){bd=d;best=vl;} });
     if(!best || bd>30){ diag.skipped.push({y:Math.round(dl.y), reason:'geen waarderegel dicht bij datum'}); return; }
@@ -909,8 +956,6 @@ function parsePdf(items, fullText, fileName){
     const date = new Date(Date.UTC(yearHint, mi, parseInt(dl.dm[2],10))).toISOString().slice(0,10);
     const time = dl.dm[3].padStart(2,'0')+':'+dl.dm[4];
 
-    // caption: alleen de caption-kolom (230..valueStart), over het hele postblok,
-    // van hoog (eerste regel) naar laag zodat de zin op volgorde staat.
     const range = blockRangeFor(best.y);
     const capParts=[];
     lines.filter(line=>line.y>=range.lower && line.y<=range.upper)
@@ -956,6 +1001,29 @@ function normalizeRows(rows, fallbackPlatform){
       views: parseNumber(r.views),
       watchDuration: watchSec,
       postType
+    };
+  });
+}
+
+/* Meta-FB-rijen: watch staat al in seconden (bv. "4163.046") */
+function normalizeMetaFacebookRows(rows){
+  return rows.map(r=>{
+    const watchSec = (r.watch===null||r.watch===undefined||r.watch==='')
+      ? null : parseNumber(r.watch);
+    return {
+      platform:'Facebook',
+      date:r.date||null, time:r.time||null,
+      text:normalizeText(r.caption)||'',
+      comments:parseNumber(r.comments),
+      engagement:parseNumber(r.engagement),
+      follows:null,
+      likes:parseNumber(r.likes),
+      reach:parseNumber(r.reach),
+      saves:null,
+      shares:parseNumber(r.shares),
+      views:parseNumber(r.views),
+      watchDuration:watchSec,
+      postType:(watchSec!==null && watchSec>0)?'reel':'post'
     };
   });
 }
@@ -1096,7 +1164,7 @@ function parseGenericSheet(rows, fullText){
 /* ============================================================
    IMPORT-VOORVERTONING
    ============================================================ */
-let pendingImport = null; // {companyId, posts(validated), diagnostics, meta}
+let pendingImport = null;
 
 function openPreview(payload){
   pendingImport = payload;
@@ -1153,7 +1221,7 @@ function openPreview(payload){
     +'Ruwe tekstitems: '+(d.rawItems||0)+'\n'
     +'Gevormde regels: '+(d.lines||0)+'\n'
     +'Herkende records: '+(d.records||0)+'\n'
-    +'Kolomkoppen + x-posities:\n'+(colLines||'  (n.v.t. — Excel-import)')+'\n'
+    +'Kolomkoppen + x-posities:\n'+(colLines||'  (n.v.t. — Excel-/tabelimport)')+'\n'
     +'Overgeslagen regels: '+((d.skipped||[]).length)+'\n'
     +(d.skipped||[]).map(s=>'  y='+s.y+': '+s.reason).join('\n')
     +((d.unmatchedCols&&d.unmatchedCols.length)?'\nNiet-gekoppelde kolommen: '+d.unmatchedCols.join(', '):'');
@@ -1172,8 +1240,6 @@ document.getElementById('previewCommit').addEventListener('click', ()=>{
   const cid=pendingImport.companyId;
   closePreview();
   renderAll();
-  const el = pendingImport && false; // noop
-  document.getElementById(pendingImport && false ? '' : 'pdfStatus');
   const status = res.added+' posts geïmporteerd voor '+COMPANIES[cid].name
     +(res.skippedDup?(' ('+res.skippedDup+' duplicaten overgeslagen)'):'')+'.';
   document.getElementById('pdfStatus').textContent = status;
@@ -1330,8 +1396,6 @@ function renderPostsTab(){
   const typeFilter=document.getElementById('postsTypeFilter').value;
   const metric=document.getElementById('postsMetric').value;
   let posts=activePosts().filter(p=>(plat==='all'||p.platform===plat)&&(typeFilter==='all'||postTypeLabel(p)===typeFilter));
-  // Kijktijd is alleen van toepassing op Reels. Gewone posts met 0 seconden
-  // mogen daarom niet in de beste/slechtste ranglijst of tijdlijn verschijnen.
   if(metric==='watchDuration') posts=posts.filter(isReel);
   const sorted=[...posts].sort((a,b)=>b[metric]-a[metric]);
   const best=sorted.slice(0,3), worst=sorted.slice(-3).reverse();
@@ -1592,17 +1656,21 @@ document.getElementById('pdfUpload').addEventListener('change',async(e)=>{
       rawText+=content.items.map(it=>it.str+(it.hasEOL?'\n':' ')).join('')+'\n';
       content.items.forEach(item=>{ if(item.str&&item.str.trim()) allItems.push({x:item.transform[4],y:item.transform[5],text:item.str,page:p,w:item.width,h:item.height}); });
     }
-    const parsed=parsePdf(allItems, rawText, file.name);
+    const isMetaFb = isMetaFacebookPdf(rawText);
+    const parsed = isMetaFb
+      ? parseMetaFacebookPdf(allItems, rawText, file.name)
+      : parsePdf(allItems, rawText, file.name);
     parsed.diagnostics.pages=pdf.numPages;
     if(parsed.error || parsed.rows.length===0){
       st.textContent = parsed.error || 'Geen posts herkend in dit PDF-bestand. Controleer of het een post-overzicht met datums en cijfers is, of gebruik de Excel-export.';
-      // toon toch diagnostiek via lege preview zodat gebruiker kan onderzoeken
       if(parsed.diagnostics && (parsed.diagnostics.rawItems||0)>0){
         openPreview({ companyId, posts:[], diagnostics:parsed.diagnostics, meta:{ fileName:file.name, platform:(parsed.profile&&parsed.profile.platform)||'onbekend' } });
       }
       e.target.value=''; return;
     }
-    const normalized=normalizeRows(parsed.rows, parsed.profile&&parsed.profile.platform);
+    const normalized = isMetaFb
+      ? normalizeMetaFacebookRows(parsed.rows)
+      : normalizeRows(parsed.rows, parsed.profile&&parsed.profile.platform);
     const validated=validatePosts(normalized);
     openPreview({ companyId, posts:validated, diagnostics:parsed.diagnostics,
       meta:{ fileName:file.name, platform:(parsed.profile&&parsed.profile.platform)||'auto' } });
@@ -1638,7 +1706,6 @@ document.getElementById('confirmX').addEventListener('click',()=>{document.getEl
 document.getElementById('confirmOverlay').addEventListener('click',e=>{if(e.target.id==='confirmOverlay')document.getElementById('confirmOverlay').style.display='none';});
 
 function normalizeImportedBackup(obj){
-  // ondersteunt nieuw (v2, companies) en oud (posts/followerStats) formaat
   if(obj && obj.companies && (obj.schemaVersion===2 || obj.version===2)){
     const companies={};
     COMPANY_ORDER.forEach(id=>{ companies[id]=createDefaultCompanyState(); });
@@ -1658,13 +1725,12 @@ function normalizeImportedBackup(obj){
 }
 function applyBackup(companies, mode){
   if(mode==='replace'){ state.companies=companies; }
-  else { // merge: voeg posts/volgers/widgets toe, dedup per vestiging
+  else {
     COMPANY_ORDER.forEach(id=>{
       const inc=companies[id]; if(!inc) return;
       const cur=getCompanyData(id);
       const existing=existingKeySet(id);
       inc.posts.forEach(p=>{ const key=dedupKey(id,p); if(!existing.has(key)){ cur.posts.push(normalizePost(p)); existing.add(key);} });
-      // volgers: op maand samenvoegen (import wint niet over bestaande)
       inc.followerStats.forEach(f=>{ if(!cur.followerStats.some(x=>x.month===f.month)) cur.followerStats.push(f); });
       inc.widgets.forEach(w=>{ if(!cur.widgets.some(x=>x.id===w.id)) cur.widgets.push(w); });
     });
@@ -1709,7 +1775,7 @@ document.getElementById('clearCompanyBtn').addEventListener('click',()=>{
   ]);
 });
 document.getElementById('clearAllBtn').addEventListener('click',()=>{
-  showConfirm('ALLES verwijderen', 'Dit verwijdert ALLE posts, volgers en widgets van <b>álle vier de vestigingen</b>. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?', [
+  showConfirm('ALLES verwijderen', 'Dit verwijdert ALLE posts, volgers en widgets van <b>alle vier de vestigingen</b>. Dit kan niet ongedaan worden gemaakt. Weet je het zeker?', [
     { label:'Ja, alles verwijderen', danger:true, onClick:()=>{
         showConfirm('Nogmaals bevestigen','Laatste bevestiging: verwijder werkelijk alle data van alle vestigingen?',[
           { label:'Definitief verwijderen', danger:true, onClick:()=>{ COMPANY_ORDER.forEach(id=>{ state.companies[id]=createDefaultCompanyState(); }); recordImportBatch(null,[]); saveState(); renderAll(); document.getElementById('undoStatus').textContent='Alle data van alle vestigingen is verwijderd.'; } },
